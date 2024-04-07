@@ -10,7 +10,7 @@ from core_apps.users.views import health_check
 
 env = environ.Env()
 
-app_name = env('APP_NAME', default='DEFAULT_APP_NAME')
+app_name = env('APP_NAME', default='Kroks')
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -36,7 +36,7 @@ urlpatterns = [
     path("api/v1/bookmarks/", include("core_apps.bookmarks.urls")),
     path("api/v1/responses/", include("core_apps.responses.urls")),
     path("api/v1/elastic/", include("core_apps.search.urls")),
-
+    path('api/v1/questions/', include('core_apps.questions.urls')),
 
 ]
 
