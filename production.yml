@@ -25,7 +25,7 @@ services:
       - static_volume:/app/staticfiles
       - media_volume:/app/mediafiles
     env_file:
-      - ./.envs/.production/.djaango
+      - ./.envs/.production/.django
       - ./.envs/.production/.postgres
     depends_on:
       - postgres
