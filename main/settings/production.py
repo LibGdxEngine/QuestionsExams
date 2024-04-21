@@ -7,7 +7,7 @@ ADMINS = [("Ahmed Fathy", "letaskono.app@gmail.com")]
 
 # TODO: add domain name of the production server
 CSRF_TRUSTED_ORIGINS = ["https://kroks.com", "https://mobile.kroks.com", "http://localhost:8080",
-                        "http://172.18.0.1:8001", "https://krok.peacode.tech"]
+                        "http://172.18.0.1:8002", "https://krok.peacode.tech"]
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default='asd')
 
