@@ -6,7 +6,7 @@ DEBUG = False
 ADMINS = [("Ahmed Fathy", "letaskono.app@gmail.com")]
 
 # TODO: add domain name of the production server
-CSRF_TRUSTED_ORIGINS = ["https://kroks.com", "https://mobile.kroks.com", "http://localhost:8080",
+CSRF_TRUSTED_ORIGINS = ["https://mobile.letaskono-zwaj.com", "https://letaskono-zwaj.com", "http://localhost:8080",
                         "http://172.18.0.1:8002", "https://krok.peacode.tech"]
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default='asd')
@@ -24,7 +24,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
 
-SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = False
 
 CSRF_COOKIE_SECURE = False
 
