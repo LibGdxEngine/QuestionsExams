@@ -16,4 +16,4 @@ class ResponseAdmin(admin.ModelAdmin):
     list_display_links = ["pkid", "id", "user"]
 
 
-admin.site.register(Response, ResponseAdmin)
+# admin.site.register(Response, ResponseAdmin)
