@@ -10,16 +10,13 @@ from core_apps.questions.models import Question
 User = get_user_model()
 
 
-class FavoriteList(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)
+class FavoriteList(TimeStampedModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorite_lists')
+    name = models.CharField(max_length=255)
+    questions = models.ManyToManyField(Question, related_name='favorite_lists', blank=True)
 
-
-class FavoriteItem(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, null=True,
-                                 blank=True)  # Your existing Question model
-    favorite_list = models.ForeignKey(FavoriteList, on_delete=models.CASCADE)
+    def __str__(self):
+        return self.name
 
 
 class Profile(TimeStampedModel):
@@ -28,7 +25,6 @@ class Profile(TimeStampedModel):
         FEMALE = "female", _("female")
         OTHER = "other", _("other")
 
-    favorites_list = models.ForeignKey(FavoriteList, on_delete=models.CASCADE, null=True, blank=True)
     user = models.OneToOneField(User, related_name="profile", on_delete=models.CASCADE)
     phone_number = PhoneNumberField(
         verbose_name=_("phone number"), max_length=30, default="+250784123456"

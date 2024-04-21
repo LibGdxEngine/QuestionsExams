@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import *
+from ..profiles.models import FavoriteList
 
 
 class LanguageSerializer(serializers.ModelSerializer):
@@ -50,13 +51,31 @@ class QuestionAnswerSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class FavoriteListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FavoriteList
+        fields = ['id', 'user', 'name', 'questions']
+
+
 class QuestionSerializer(serializers.ModelSerializer):
-    answers = QuestionAnswerSerializer(many=True)
-    correct_answer = QuestionAnswerSerializer()
+    answers = serializers.PrimaryKeyRelatedField(queryset=QuestionAnswer.objects.all(), many=True)
+    correct_answer = serializers.PrimaryKeyRelatedField(queryset=QuestionAnswer.objects.all())
 
     class Meta:
         model = Question
         fields = '__all__'
+
+    def to_internal_value(self, data):
+        data = data.copy()
+        answers = data.pop('answers', None)
+        correct_answer = data.pop('correct_answer', None)
+
+        if answers is not None:
+            data['answers'] = [answer.id for answer in answers]
+        if correct_answer is not None:
+            data['correct_answer'] = correct_answer.id
+
+        return super().to_internal_value(data)
 
 
 class ExamJourneySerializer(serializers.ModelSerializer):

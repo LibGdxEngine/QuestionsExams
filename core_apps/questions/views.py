@@ -1,7 +1,10 @@
+from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from .models import *
 from .serializers import *
+from rest_framework import filters
 
 
 class LanguageViewSet(viewsets.ModelViewSet):
@@ -62,3 +65,37 @@ class ExamJourneyViewSet(viewsets.ModelViewSet):
     queryset = ExamJourney.objects.all()
     serializer_class = ExamJourneySerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = [
+        'type',
+        'questions__text',
+        'questions__language__name',
+        'questions__specificity__name',
+        'questions__level__name',
+        'questions__correct_answer__answer'
+    ]
+
+    def get_queryset(self):
+        # Filter ExamJourney objects by the logged-in user
+        return ExamJourney.objects.filter(user=self.request.user)
+
+
+class FavoriteListViewSet(viewsets.ModelViewSet):
+    queryset = FavoriteList.objects.all()
+    serializer_class = FavoriteListSerializer
+
+    @action(detail=True, methods=['post'])
+    def add_question(self, request, pk=None):
+        favorite_list = FavoriteList.objects.get(id=pk)
+        question_id = request.data.get('question_id')
+        question = Question.objects.get(pk=question_id)
+        favorite_list.questions.add(question)
+        return Response({'status': 'Question added to favorite list successfully'})
+
+    @action(detail=True, methods=['post'])
+    def remove_question(self, request, pk=None):
+        favorite_list = FavoriteList.objects.get(id=pk)
+        question_id = request.data.get('question_id')
+        question = Question.objects.get(id=question_id)
+        favorite_list.questions.remove(question)
+        return Response({'status': 'Question removed from favorite list successfully'})

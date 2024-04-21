@@ -7,33 +7,57 @@ User = get_user_model()
 class Language(models.Model):
     name = models.CharField(max_length=50)
 
+    def __str__(self):
+        return self.name
+
 
 class Specificity(models.Model):
     name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
 
 
 class Level(models.Model):
     name = models.CharField(max_length=50)
 
+    def __str__(self):
+        return self.name
+
 
 class Year(models.Model):
     year = models.IntegerField()
+
+    def __str__(self):
+        return self.year
 
 
 class Subject(models.Model):
     name = models.CharField(max_length=100)
 
+    def __str__(self):
+        return self.name
+
 
 class System(models.Model):
     name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
 
 
 class Topic(models.Model):
     name = models.CharField(max_length=100)
 
+    def __str__(self):
+        return self.name
+
 
 class QuestionAnswer(models.Model):
     answer = models.CharField(max_length=300)
+
+    def __str__(self):
+        return self.answer
 
 
 class Question(models.Model):
@@ -49,6 +73,9 @@ class Question(models.Model):
     correct_answer = models.ForeignKey(QuestionAnswer, on_delete=models.CASCADE)
     is_used = models.BooleanField(default=False)
     is_correct = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.text
 
 
 class ExamJourney(models.Model):

@@ -6,13 +6,14 @@ DEBUG = False
 ADMINS = [("Ahmed Fathy", "letaskono.app@gmail.com")]
 
 # TODO: add domain name of the production server
-CSRF_TRUSTED_ORIGINS = ["https://kroks.com", "https://mobile.kroks.com", "http://localhost:8080"]
+CSRF_TRUSTED_ORIGINS = ["https://kroks.com", "https://mobile.kroks.com", "http://localhost:8080",
+                        "http://172.18.0.1:8001", "https://krok.peacode.tech"]
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default='asd')
 
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS",
-                         default=['kroks.com', 'mobile.kroks.com', 'localhost',
-                                  'http://localhost:3000'])
+                         default=['kroks.com', 'mobile.kroks.com', 'localhost', "172.18.0.1","krok.peacode.tech"
+                                                                                'http://localhost:3000'])
 CORS_ALLOW_ALL_ORIGINS = True
 
 ADMIN_URL = env("DJANGO_ADMIN_URL", default='')

@@ -3,6 +3,8 @@ from django.contrib.auth import get_user_model
 from django.db.models.signals import post_save
 from faker import Factory as FakerFactory
 
+from core_apps.profiles.models import FavoriteList
+
 faker = FakerFactory.create()
 
 User = get_user_model()
@@ -26,3 +28,11 @@ class UserFactory(factory.django.DjangoModelFactory):
             return manager.create_superuser(*args, **kwargs)
         else:
             return manager.create_user(*args, **kwargs)
+
+    @classmethod
+    def create_with_favorite_list(cls, **kwargs):
+        user = cls()
+        user.save()
+        fvls = FavoriteList.objects.create(user=user, name='My Favorites')
+        fvls.save()
+        return user
