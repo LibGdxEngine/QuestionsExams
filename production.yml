@@ -19,8 +19,6 @@ services:
     build:
       context: .
       dockerfile: ./docker/production/django/Dockerfile
-    ports:
-      - "8003:8003"
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/mediafiles
