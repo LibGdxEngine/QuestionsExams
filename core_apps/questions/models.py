@@ -29,7 +29,7 @@ class Year(models.Model):
     year = models.IntegerField()
 
     def __str__(self):
-        return self.year
+        return str(self.year)
 
 
 class Subject(models.Model):

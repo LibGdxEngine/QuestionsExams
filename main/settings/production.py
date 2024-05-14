@@ -12,8 +12,9 @@ CSRF_TRUSTED_ORIGINS = ["https://mobile.letaskono-zwaj.com", "https://letaskono-
 SECRET_KEY = env("DJANGO_SECRET_KEY", default='asd')
 
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS",
-                         default=['kroks.com', 'mobile.kroks.com', 'localhost', "172.18.0.1","krok.peacode.tech"
-                                                                                'http://localhost:3000'])
+                         default=['http://krokplus.com', '93.127.203.112', 'krokplus.com', 'localhost', "172.18.0.1",
+                                  "krok.peacode.tech"
+                                  'http://localhost:3000'])
 CORS_ALLOW_ALL_ORIGINS = True
 
 ADMIN_URL = env("DJANGO_ADMIN_URL", default='')
