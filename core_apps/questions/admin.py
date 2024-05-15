@@ -5,8 +5,7 @@ from .models import Language, Specificity, Level, Year, Subject, System, Topic, 
 
 
 class QuestionAdmin(ImportExportModelAdmin, admin.ModelAdmin):
-    list_display = ('text', 'language', 'specificity', 'level', 'years', 'subjects', 'systems', 'topics', 'answers',
-                    'correct_answer', 'is_used', 'is_correct')
+    list_display = ('text', 'language', 'specificity', 'level')
     search_fields = ('text', 'language', 'specificity', 'level', 'years', 'subjects', 'systems', 'topics', 'answers',
                      'correct_answer', 'is_used', 'is_correct')
     list_filter = ('language', 'specificity', 'level', 'years', 'subjects', 'systems', 'topics', 'answers',
