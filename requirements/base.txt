@@ -19,7 +19,7 @@ django-celery-email==3.0.0
 django-elasticsearch-dsl==7.3.0
 django-elasticsearch-dsl-drf==0.22.5
 django-admincharts==0.4.1
-django-jazzmin==2.6.0
+django-jazzmin
 django-import-export==3.3.7
 drf-spectacular>=0.22.1,<0.23
 django_extensions
