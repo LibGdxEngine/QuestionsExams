@@ -6,8 +6,8 @@ DEBUG = False
 ADMINS = [("Ahmed Fathy", "letaskono.app@gmail.com")]
 
 # TODO: add domain name of the production server
-CSRF_TRUSTED_ORIGINS = ["https://krokplus.com", "https://www.krokplus.com", "http://localhost:8000",
-                        "http://93.127.203.112"]
+# CSRF_TRUSTED_ORIGINS = ["https://krokplus.com", "https://www.krokplus.com", "http://localhost:8000",
+#                         "http://93.127.203.112"]
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default='asd')
 
@@ -26,6 +26,8 @@ SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
 SESSION_COOKIE_SECURE = False
 
 CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = None
 
 # TODO: change to 518400 seconds later
 SECURE_HSTS_SECONDS = 60
