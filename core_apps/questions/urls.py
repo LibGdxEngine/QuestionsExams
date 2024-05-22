@@ -1,6 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import *
+from .views import (
+    LanguageViewSet, SpecificityViewSet, LevelViewSet, YearViewSet,
+    SubjectViewSet, SystemViewSet, TopicViewSet, QuestionAnswerViewSet,
+    QuestionViewSet, FavoriteListViewSet, ExamJourneyViewSet, CreateExamJourneyAPIView, UpdateExamJourneyAPIView
+)
+
 app_name = 'questions'
 router = DefaultRouter()
 router.register(r'languages', LanguageViewSet)
@@ -17,4 +22,6 @@ router.register(r'exam-journeys', ExamJourneyViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('create-exam-journey/', CreateExamJourneyAPIView.as_view(), name='create-exam-journey'),
+    path('update-exam-journey/<int:pk>/', UpdateExamJourneyAPIView.as_view(), name='update-exam-journey'),
 ]

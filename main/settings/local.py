@@ -14,7 +14,7 @@ SESSION_COOKIE_SECURE = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
 ]
-CSRF_TRUSTED_ORIGINS = ["http://localhost:8080, http://localhost:8000"]
+CSRF_TRUSTED_ORIGINS = ["http://localhost:8080, http://localhost:8000", "http://localhost:3000/"]
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"

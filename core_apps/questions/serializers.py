@@ -79,6 +79,25 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 
 class ExamJourneySerializer(serializers.ModelSerializer):
+    questions = QuestionSerializer(many=True, read_only=True)
+
     class Meta:
         model = ExamJourney
         fields = '__all__'
+
+
+class ExamJourneyUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExamJourney
+        fields = ['time_left', 'progress', 'current_question']
+
+
+class QuestionFilterSerializer(serializers.Serializer):
+    language = serializers.IntegerField(required=False)
+    specificity = serializers.IntegerField(required=False)
+    level = serializers.IntegerField(required=False)
+    years = serializers.ListField(child=serializers.IntegerField(), required=False)
+    subjects = serializers.ListField(child=serializers.IntegerField(), required=False)
+    systems = serializers.ListField(child=serializers.IntegerField(), required=False)
+    topics = serializers.ListField(child=serializers.IntegerField(), required=False)
+    number_of_questions = serializers.IntegerField()

@@ -6,8 +6,8 @@ DEBUG = False
 ADMINS = [("Ahmed Fathy", "letaskono.app@gmail.com")]
 
 # TODO: add domain name of the production server
-CSRF_TRUSTED_ORIGINS = ["https://mobile.letaskono-zwaj.com", "https://letaskono-zwaj.com", "http://localhost:8080",
-                        "http://172.18.0.1:8002", "https://krok.peacode.tech", "http://93.127.203.112"]
+CSRF_TRUSTED_ORIGINS = ["https://krokplus.com", "https://www.krokplus.com", "http://localhost:8000",
+                        "http://93.127.203.112"]
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default='asd')
 
