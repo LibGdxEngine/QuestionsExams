@@ -51,19 +51,10 @@ class QuestionAnswerSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class FavoriteListSerializer(serializers.ModelSerializer):
+class AnswerSerializer(serializers.ModelSerializer):
     class Meta:
-        model = FavoriteList
-        fields = ['id', 'user', 'name', 'questions']
-
-
-class QuestionSerializer(serializers.ModelSerializer):
-    answers = serializers.PrimaryKeyRelatedField(queryset=QuestionAnswer.objects.all(), many=True)
-    correct_answer = serializers.PrimaryKeyRelatedField(queryset=QuestionAnswer.objects.all())
-
-    class Meta:
-        model = Question
-        fields = '__all__'
+        model = QuestionAnswer
+        fields = ['id', 'answer']
 
     def to_internal_value(self, data):
         data = data.copy()
@@ -76,6 +67,26 @@ class QuestionSerializer(serializers.ModelSerializer):
             data['correct_answer'] = correct_answer.id
 
         return super().to_internal_value(data)
+
+
+class QuestionSerializer(serializers.ModelSerializer):
+    answers = AnswerSerializer(many=True, read_only=True)
+    correct_answer = AnswerSerializer(read_only=True)
+
+    class Meta:
+        model = Question
+        fields = '__all__'
+
+
+class FavoriteListSerializer(serializers.ModelSerializer):
+    questions = QuestionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = FavoriteList
+        fields = ['id', 'pkid', 'user', 'name', 'questions']
+        extra_kwargs = {
+            'user': {'read_only': True}  # Make user read-only so it is not required in input data
+        }
 
 
 class ExamJourneySerializer(serializers.ModelSerializer):

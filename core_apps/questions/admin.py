@@ -8,6 +8,10 @@ from .resources import QuestionResource
 @admin.register(Question)
 class QuestionAdmin(ImportExportModelAdmin):
     resource_class = QuestionResource
+    list_display = ['text', 'language', 'specificity', 'level', 'correct_answer']
+    search_fields = ['text', 'language__name', 'specificity__name', 'level__name', 'correct_answer__answer']
+    list_filter = ['language', 'specificity', 'level', 'years', 'subjects', 'systems', 'topics']
+    filter_horizontal = ['years', 'subjects', 'systems', 'topics', 'answers']
 
 
 admin.site.register(Language)

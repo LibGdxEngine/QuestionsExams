@@ -5,7 +5,6 @@ from rest_framework.decorators import action
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
-from .serializers import ExamJourneySerializer, QuestionFilterSerializer
 from .serializers import *
 from rest_framework import filters
 
@@ -86,7 +85,8 @@ class ExamJourneyViewSet(viewsets.ModelViewSet):
 
 
 class CreateExamJourneyAPIView(APIView):
-    permission_classes = [permissions.ReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def post(self, request, *args, **kwargs):
         question_filter_serializer = QuestionFilterSerializer(data=request.data)
 
@@ -135,7 +135,7 @@ class CreateExamJourneyAPIView(APIView):
 
 class UpdateExamJourneyAPIView(APIView):
     authentication_classes = [authentication.TokenAuthentication, authentication.SessionAuthentication]
-    permission_classes = [permissions.IsOwnerOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def patch(self, request, pk, *args, **kwargs):
         exam_journey = get_object_or_404(ExamJourney, pk=pk, user=request.user)
@@ -145,23 +145,32 @@ class UpdateExamJourneyAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class FavoriteListViewSet(viewsets.ModelViewSet):
     queryset = FavoriteList.objects.all()
     serializer_class = FavoriteListSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
+    def perform_create(self, serializer):
+        # Set the user field to the logged-in user
+        serializer.save(user=self.request.user)
+
+    def get_queryset(self):
+        # Filter ExamJourney objects by the logged-in user
+        return FavoriteList.objects.filter(user=self.request.user)
+
     @action(detail=True, methods=['post'])
     def add_question(self, request, pk=None):
-        favorite_list = FavoriteList.objects.get(id=pk)
-        question_id = request.data.get('question_id')
+        favorite_list = FavoriteList.objects.get(pkid=pk)
+        question_id = get_object_or_404(request.data, 'question_id')
         question = Question.objects.get(pk=question_id)
         favorite_list.questions.add(question)
         return Response({'status': 'Question added to favorite list successfully'})
 
     @action(detail=True, methods=['post'])
     def remove_question(self, request, pk=None):
-        favorite_list = FavoriteList.objects.get(id=pk)
-        question_id = request.data.get('question_id')
+        favorite_list = FavoriteList.objects.get(pkid=pk)
+        question_id = get_object_or_404(request.data, 'question_id')
         question = Question.objects.get(id=question_id)
         favorite_list.questions.remove(question)
         return Response({'status': 'Question removed from favorite list successfully'})
