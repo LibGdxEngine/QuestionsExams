@@ -69,6 +69,8 @@ class Question(models.Model):
     subjects = models.ManyToManyField(Subject)
     systems = models.ManyToManyField(System)
     topics = models.ManyToManyField(Topic)
+    hint = models.CharField(max_length=300, blank=True, default="")
+    video_hint = models.URLField(blank=True, default="")
     answers = models.ManyToManyField(QuestionAnswer, related_name='questions')
     correct_answer = models.ForeignKey(QuestionAnswer, on_delete=models.CASCADE)
     is_used = models.BooleanField(default=False)
@@ -90,3 +92,14 @@ class ExamJourney(models.Model):
 
     def __str__(self):
         return f'{self.user} - {self.type}'
+
+
+class Note(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    question = models.ForeignKey('Question', on_delete=models.CASCADE)
+    note_text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'Note by {self.user} on {self.question}'

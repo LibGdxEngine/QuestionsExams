@@ -29,12 +29,12 @@ class Profile(TimeStampedModel):
     phone_number = PhoneNumberField(
         verbose_name=_("phone number"), max_length=30, default="+250784123456"
     )
-    about_me = models.TextField(
-        verbose_name=_("city"),
+    university = models.TextField(
+        verbose_name=_("university"),
         max_length=180,
-        default="tell about yourself",
-        blank=False,
-        null=False,
+        default="Your University",
+        blank=True,
+        null=True,
     )
     gender = models.CharField(
         verbose_name=_("gender"),

@@ -5,7 +5,7 @@ from django.core.mail import send_mail
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.parsers import MultiPartParser
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
 # TODO: change this in production
@@ -28,7 +28,7 @@ class ProfileListAPIView(generics.ListAPIView):
 
 
 class ProfileDetailAPIView(generics.RetrieveAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = ProfileSerializer
     renderer_classes = (ProfileJSONRenderer,)
 
@@ -38,15 +38,16 @@ class ProfileDetailAPIView(generics.RetrieveAPIView):
 
     def get_object(self):
         user = self.request.user
+        print(user)
+        print('Hello')
         profile = self.get_queryset().get(user=user)
+        print(profile)
         return profile
 
 
 class UpdateProfileAPIView(generics.UpdateAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = UpdateProfileSerializer
-    parser_classes = (MultiPartParser,)
-    renderer_classes = (ProfileJSONRenderer,)
 
     def get_object(self):
         profile = self.request.user.profile

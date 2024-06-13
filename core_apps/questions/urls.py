@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     LanguageViewSet, SpecificityViewSet, LevelViewSet, YearViewSet,
     SubjectViewSet, SystemViewSet, TopicViewSet, QuestionAnswerViewSet,
-    QuestionViewSet, FavoriteListViewSet, ExamJourneyViewSet, CreateExamJourneyAPIView, UpdateExamJourneyAPIView
+    QuestionViewSet, FavoriteListViewSet, ExamJourneyViewSet, CreateExamJourneyAPIView, UpdateExamJourneyAPIView,
+    NoteViewSet, ReportViewSet
 )
 
 app_name = 'questions'
@@ -18,6 +19,8 @@ router.register(r'topics', TopicViewSet)
 router.register(r'question-answers', QuestionAnswerViewSet)
 router.register(r'questions', QuestionViewSet)
 router.register(r'favorites', FavoriteListViewSet)
+router.register(r'notes', NoteViewSet)
+router.register(r'reports', ReportViewSet)
 router.register(r'exam-journeys', ExamJourneyViewSet)
 
 urlpatterns = [

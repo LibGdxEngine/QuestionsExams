@@ -112,3 +112,48 @@ class QuestionFilterSerializer(serializers.Serializer):
     systems = serializers.ListField(child=serializers.IntegerField(), required=False)
     topics = serializers.ListField(child=serializers.IntegerField(), required=False)
     number_of_questions = serializers.IntegerField()
+    type = serializers.ChoiceField(choices=ExamJourney._meta.get_field('type').choices, required=True)
+
+
+class NoteSerializer(serializers.ModelSerializer):
+    question = QuestionSerializer
+
+    class Meta:
+        model = Note
+        fields = ['id', 'user', 'question', 'note_text', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'user']
+
+    def create(self, validated_data):
+        # Automatically set the user from the request
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+class Report(models.Model):
+    REPORT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('reviewed', 'Reviewed'),
+        ('resolved', 'Resolved'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    question = models.ForeignKey('Question', on_delete=models.CASCADE)
+    reason = models.TextField()
+    status = models.CharField(max_length=20, choices=REPORT_STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'Report by {self.user} on {self.question}'
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = ['id', 'user', 'question', 'reason', 'status', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'status', 'created_at', 'updated_at', 'user']
+
+    def create(self, validated_data):
+        # Automatically set the user from the request
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)

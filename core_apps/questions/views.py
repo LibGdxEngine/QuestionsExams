@@ -113,9 +113,12 @@ class CreateExamJourneyAPIView(APIView):
             if questions.count() < number_of_questions:
                 return Response({'error': 'Not enough questions available for the given filters'},
                                 status=status.HTTP_400_BAD_REQUEST)
+            # Extract the type field from the validated data
+            journey_type = question_filter_serializer.validated_data['type']
+
             exam_journey_data = {
                 'user': request.user.pk,  # Assuming you have user authentication
-                'type': 'exam',  # Or 'study', based on your requirement
+                'type': journey_type,  # Use the extracted type value
                 'questions': [question.id for question in questions],
                 'current_question': 0,
                 'progress': {},
@@ -174,3 +177,38 @@ class FavoriteListViewSet(viewsets.ModelViewSet):
         question = Question.objects.get(id=question_id)
         favorite_list.questions.remove(question)
         return Response({'status': 'Question removed from favorite list successfully'})
+
+
+class NoteViewSet(viewsets.ModelViewSet):
+    queryset = Note.objects.all()
+    serializer_class = NoteSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+
+
+
+
+
+
+class ReportViewSet(viewsets.ModelViewSet):
+    queryset = Report.objects.all()
+    serializer_class = ReportSerializer
+
+    def get_permissions(self):
+        if self.action in ['create']:
+            self.permission_classes = [permissions.IsAuthenticated]
+        else:
+            self.permission_classes = [permissions.IsAdminUser]
+        return super().get_permissions()
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return Report.objects.all()
+        return Report.objects.filter(user=self.request.user)
