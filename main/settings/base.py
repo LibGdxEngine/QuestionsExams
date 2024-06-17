@@ -72,8 +72,9 @@ AUTHENTICATION_BACKENDS = (
 )
 
 # Add your social auth keys
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '794210030409-1jblj5njdfsn27qnjv0nk326fm0o5oi6.apps.googleusercontent.com'
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'
 
-hello = 1
 SOCIAL_AUTH_FACEBOOK_KEY = '<your-facebook-app-id>'
 SOCIAL_AUTH_FACEBOOK_SECRET = '<your-facebook-app-secret>'
 
@@ -98,7 +99,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "core_apps.users.middleware.DDosMiddleware",
     # TODO: comment out this line in production
-    # "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
