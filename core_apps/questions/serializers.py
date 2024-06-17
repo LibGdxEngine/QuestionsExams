@@ -116,7 +116,7 @@ class QuestionFilterSerializer(serializers.Serializer):
 
 
 class NoteSerializer(serializers.ModelSerializer):
-    question = QuestionSerializer
+    question = QuestionSerializer()
 
     class Meta:
         model = Note
@@ -129,29 +129,20 @@ class NoteSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class Report(models.Model):
-    REPORT_STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('reviewed', 'Reviewed'),
-        ('resolved', 'Resolved'),
-    ]
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    question = models.ForeignKey('Question', on_delete=models.CASCADE)
-    reason = models.TextField()
-    status = models.CharField(max_length=20, choices=REPORT_STATUS_CHOICES, default='pending')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f'Report by {self.user} on {self.question}'
-
-
 class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = ['id', 'user', 'question', 'reason', 'status', 'created_at', 'updated_at']
         read_only_fields = ['id', 'status', 'created_at', 'updated_at', 'user']
+
+    def validate(self, data):
+        user = self.context['request'].user
+        question = data.get('question')
+
+        if Report.objects.filter(user=user, question=question).exists():
+            raise serializers.ValidationError("You have already reported this question.")
+
+        return data
 
     def create(self, validated_data):
         # Automatically set the user from the request

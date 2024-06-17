@@ -46,7 +46,9 @@ THIRD_PARTY_APPS = [
     "django_elasticsearch_dsl",
     "django_elasticsearch_dsl_drf",
     'django_extensions',
+    'social_django',
 ]
+
 
 LOCAL_APPS = [
     "core_apps.profiles",
@@ -62,6 +64,30 @@ LOCAL_APPS = [
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.google.GoogleOAuth2',
+    'social_core.backends.facebook.FacebookOAuth2',
+    'social_core.backends.apple.AppleIdAuth',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+# Add your social auth keys
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '794210030409-1jblj5njdfsn27qnjv0nk326fm0o5oi6.apps.googleusercontent.com'
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'
+
+SOCIAL_AUTH_FACEBOOK_KEY = '<your-facebook-app-id>'
+SOCIAL_AUTH_FACEBOOK_SECRET = '<your-facebook-app-secret>'
+
+SOCIAL_AUTH_APPLE_ID_CLIENT = '<your-apple-client-id>'
+SOCIAL_AUTH_APPLE_ID_TEAM = '<your-apple-team-id>'
+SOCIAL_AUTH_APPLE_ID_KEY = '<your-apple-key-id>'
+SOCIAL_AUTH_APPLE_ID_SECRET = '<your-apple-key-secret>'
+
+SOCIAL_AUTH_JSONFIELD_ENABLED = True
+
+# Configure the URL for the frontend app
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
+
 DDOS_REQUEST_THRESHOLD = 100  # Maximum number of requests allowed within the time window
 DDOS_TIME_WINDOW = 60  # Time window in seconds
 
@@ -73,10 +99,11 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "core_apps.users.middleware.DDosMiddleware",
     # TODO: comment out this line in production
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    # "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'social_django.middleware.SocialAuthExceptionMiddleware',
 ]
 
 ROOT_URLCONF = "main.urls"
@@ -92,10 +119,15 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
 ]
+
+# URL to redirect to after social login
+LOGIN_REDIRECT_URL = '/'
 
 WSGI_APPLICATION = "main.wsgi.application"
 

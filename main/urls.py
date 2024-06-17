@@ -29,6 +29,7 @@ urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     path('api/v1/health-check', health_check, name='health-check'),
     path('api/v1/user/', include('core_apps.users.urls', namespace='users')),
+    path('social-auth/', include('social_django.urls', namespace='social')),
     # Articles
     path("api/v1/profiles/", include("core_apps.profiles.urls")),
     path("api/v1/articles/", include("core_apps.articles.urls")),

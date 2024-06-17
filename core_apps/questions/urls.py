@@ -4,7 +4,7 @@ from .views import (
     LanguageViewSet, SpecificityViewSet, LevelViewSet, YearViewSet,
     SubjectViewSet, SystemViewSet, TopicViewSet, QuestionAnswerViewSet,
     QuestionViewSet, FavoriteListViewSet, ExamJourneyViewSet, CreateExamJourneyAPIView, UpdateExamJourneyAPIView,
-    NoteViewSet, ReportViewSet
+    NoteViewSet, QuestionSearchView, ReportView, QuestionCountView
 )
 
 app_name = 'questions'
@@ -20,11 +20,14 @@ router.register(r'question-answers', QuestionAnswerViewSet)
 router.register(r'questions', QuestionViewSet)
 router.register(r'favorites', FavoriteListViewSet)
 router.register(r'notes', NoteViewSet)
-router.register(r'reports', ReportViewSet)
+# router.register(r'reports', ReportViewSet)
 router.register(r'exam-journeys', ExamJourneyViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
     path('create-exam-journey/', CreateExamJourneyAPIView.as_view(), name='create-exam-journey'),
     path('update-exam-journey/<int:pk>/', UpdateExamJourneyAPIView.as_view(), name='update-exam-journey'),
+    path('search/', QuestionSearchView.as_view(), name='search_questions'),
+    path('reports/', ReportView.as_view(), name='search_questions'),
+    path('count/', QuestionCountView.as_view(), name='question-count')
 ]

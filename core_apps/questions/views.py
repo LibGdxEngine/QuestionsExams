@@ -1,14 +1,18 @@
+import random
+
+from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import status, permissions, authentication
+from django.views.generic import ListView
+from rest_framework import status, authentication
+from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
 from .serializers import *
 from rest_framework import filters
-
-from ..articles import permissions
 
 
 class LanguageViewSet(viewsets.ModelViewSet):
@@ -108,7 +112,8 @@ class CreateExamJourneyAPIView(APIView):
                 filters['topics__id__in'] = question_filter_serializer.validated_data['topics']
 
             number_of_questions = question_filter_serializer.validated_data['number_of_questions']
-            questions = Question.objects.filter(**filters)[:number_of_questions]
+            selected_questions = Question.objects.filter(**filters)
+            questions = selected_questions[:number_of_questions]
 
             if questions.count() < number_of_questions:
                 return Response({'error': 'Not enough questions available for the given filters'},
@@ -191,24 +196,98 @@ class NoteViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
+class QuestionCountView(APIView):
+    def get(self, request, *args, **kwargs):
+        filters = Q()
+
+        language = request.GET.get('language')
+        if language:
+            filters &= Q(language__id=language)
+
+        specificity = request.GET.get('specificity')
+        if specificity:
+            filters &= Q(specificity__id=specificity)
+
+        level = request.GET.get('level')
+        if level:
+            filters &= Q(level__id=level)
+
+        years = request.GET.getlist('years')
+        if years:
+            filters &= Q(years__id__in=years)
+
+        subjects = request.GET.getlist('subjects')
+        if subjects:
+            filters &= Q(subjects__id__in=subjects)
+
+        systems = request.GET.getlist('systems')
+        if systems:
+            filters &= Q(systems__id__in=systems)
+
+        topics = request.GET.getlist('topics')
+        if topics:
+            filters &= Q(topics__id__in=topics)
+
+        is_used = request.GET.get('is_used')
+        if is_used is not None:
+            filters &= Q(is_used=is_used)
+
+        is_correct = request.GET.get('is_correct')
+        if is_correct is not None:
+            filters &= Q(is_correct=is_correct)
+
+        count = Question.objects.filter(filters).distinct().count()
+        return Response({'count': count}, status=status.HTTP_200_OK)
 
 
-
-
-
-
-class ReportViewSet(viewsets.ModelViewSet):
-    queryset = Report.objects.all()
-    serializer_class = ReportSerializer
-
-    def get_permissions(self):
-        if self.action in ['create']:
-            self.permission_classes = [permissions.IsAuthenticated]
-        else:
-            self.permission_classes = [permissions.IsAdminUser]
-        return super().get_permissions()
+class QuestionSearchView(ListView):
+    model = Question
+    context_object_name = 'questions'
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        if self.request.user.is_staff:
-            return Report.objects.all()
-        return Report.objects.filter(user=self.request.user)
+        search_term = self.request.GET.get('q', '')
+        if search_term:
+            queryset = Question.objects.filter(
+                Q(text__icontains=search_term) |
+                Q(answers__answer__icontains=search_term)
+            ).distinct()
+        else:
+            queryset = Question.objects.none()
+        return queryset
+
+    def render_to_response(self, context, **response_kwargs):
+        questions = context['questions']
+        results = []
+        for question in questions:
+            results.append({
+                'id': question.id,
+                'text': question.text,
+                'hint': question.hint,
+                'video_hint': question.video_hint,
+                'is_used': question.is_used,
+                'is_correct': question.is_correct,
+                'answers': list(question.answers.values('id', 'answer')),
+                'correct_answer': str(question.correct_answer),
+                'language': question.language.name,
+                'specificity': question.specificity.name,
+                'level': question.level.name,
+                'years': [year.year for year in question.years.all()],
+                'subjects': [subject.name for subject in question.subjects.all()],
+                'systems': [system.name for system in question.systems.all()],
+                'topics': [topic.name for topic in question.topics.all()],
+
+            })
+        return JsonResponse({'results': results})
+
+
+class ReportView(CreateAPIView):
+    queryset = Report.objects.all()
+    serializer_class = ReportSerializer
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def perform_create(self, serializer):
+        # Automatically set the user from the request
+        serializer.save(user=self.request.user)
