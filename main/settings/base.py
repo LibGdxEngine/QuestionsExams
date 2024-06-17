@@ -73,7 +73,7 @@ AUTHENTICATION_BACKENDS = (
 
 # Add your social auth keys
 
-
+hello = 1
 SOCIAL_AUTH_FACEBOOK_KEY = '<your-facebook-app-id>'
 SOCIAL_AUTH_FACEBOOK_SECRET = '<your-facebook-app-secret>'
 
