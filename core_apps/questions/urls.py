@@ -4,7 +4,7 @@ from .views import (
     LanguageViewSet, SpecificityViewSet, LevelViewSet, YearViewSet,
     SubjectViewSet, SystemViewSet, TopicViewSet, QuestionAnswerViewSet,
     QuestionViewSet, FavoriteListViewSet, ExamJourneyViewSet, CreateExamJourneyAPIView, UpdateExamJourneyAPIView,
-    NoteViewSet, QuestionSearchView, ReportView, QuestionCountView
+    NoteViewSet, QuestionSearchView, ReportView, QuestionCountView, UniversityViewSet
 )
 
 app_name = 'questions'
@@ -20,6 +20,7 @@ router.register(r'question-answers', QuestionAnswerViewSet)
 router.register(r'questions', QuestionViewSet)
 router.register(r'favorites', FavoriteListViewSet)
 router.register(r'notes', NoteViewSet)
+router.register(r'university', UniversityViewSet)
 # router.register(r'reports', ReportViewSet)
 router.register(r'exam-journeys', ExamJourneyViewSet)
 
