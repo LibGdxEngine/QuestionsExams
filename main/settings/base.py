@@ -47,11 +47,7 @@ THIRD_PARTY_APPS = [
     "django_elasticsearch_dsl_drf",
     'django_extensions',
     'social_django',
-    # 'rest_auth',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
+
 ]
 
 LOCAL_APPS = [
