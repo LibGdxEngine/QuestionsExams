@@ -47,8 +47,12 @@ THIRD_PARTY_APPS = [
     "django_elasticsearch_dsl_drf",
     'django_extensions',
     'social_django',
+    # 'rest_auth',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
-
 
 LOCAL_APPS = [
     "core_apps.profiles",
@@ -65,12 +69,27 @@ LOCAL_APPS = [
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 AUTHENTICATION_BACKENDS = (
+    'allauth.account.auth_backends.AuthenticationBackend',
     'social_core.backends.google.GoogleOAuth2',
     'social_core.backends.facebook.FacebookOAuth2',
     'social_core.backends.apple.AppleIdAuth',
     'django.contrib.auth.backends.ModelBackend',
 )
 
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    }
+}
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_USE_DEPRECATED_API = True
+SOCIAL_AUTH_GOOGLE_PLUS_USE_DEPRECATED_API = True
 # Add your social auth keys
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '794210030409-1jblj5njdfsn27qnjv0nk326fm0o5oi6.apps.googleusercontent.com'
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'
@@ -84,7 +103,7 @@ SOCIAL_AUTH_APPLE_ID_KEY = '<your-apple-key-id>'
 SOCIAL_AUTH_APPLE_ID_SECRET = '<your-apple-key-secret>'
 
 SOCIAL_AUTH_JSONFIELD_ENABLED = True
-
+SOCIAL_AUTH_REQUIRE_POST = True
 # Configure the URL for the frontend app
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
 
@@ -104,6 +123,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'social_django.middleware.SocialAuthExceptionMiddleware',
+    'allauth.account.middleware.AccountMiddleware'
 ]
 
 ROOT_URLCONF = "main.urls"
@@ -180,8 +200,7 @@ STATIC_ROOT = str(ROOT_DIR / "staticfiles")
 
 MEDIA_URL = "/mediafiles/"
 MEDIA_ROOT = str(ROOT_DIR / "mediafiles")
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # Default primary key field type
