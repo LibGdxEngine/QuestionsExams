@@ -119,7 +119,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'social_django.middleware.SocialAuthExceptionMiddleware',
-    'allauth.account.middleware.AccountMiddleware'
+
 ]
 
 ROOT_URLCONF = "main.urls"

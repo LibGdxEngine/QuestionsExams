@@ -38,11 +38,6 @@ urlpatterns = [
     path("api/v1/responses/", include("core_apps.responses.urls")),
     path("api/v1/elastic/", include("core_apps.search.urls")),
     path('api/v1/questions/', include('core_apps.questions.urls')),
-    # social auth
-    path('api/', include('rest_framework.urls')),
-    path('api/auth/', include('allauth.urls')),
-    path('api/auth/', include('allauth.account.urls')),
-    path('api/auth/', include('allauth.socialaccount.urls')),
 ]
 
 admin.site.site_header = "{} Admin Panel".format(app_name)
