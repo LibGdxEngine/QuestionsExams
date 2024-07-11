@@ -10,9 +10,9 @@ CSRF_TRUSTED_ORIGINS = ["http://app.krokplus.com", "http://krokplus.com", "httsp
                         "https://www.krokplus.com", "http://localhost:8000",
                         "http://93.127.203.112"]
 
-SECRET_KEY = env("DJANGO_SECRET_KEY", default='asd')
+SECRET_KEY = env("DJANGO_SECRET_KEY", default='newsecretkey')
 
-ALLOWED_HOSTS = ['app.krokplus.com', '93.127.203.112', 'www.krokplus.com', 'app.krokplus.com']
+ALLOWED_HOSTS = ['app.krokplus.com', '93.127.203.112', 'www.krokplus.com', 'www.app.krokplus.com']
 
 CORS_ALLOW_ALL_ORIGINS = True
 
