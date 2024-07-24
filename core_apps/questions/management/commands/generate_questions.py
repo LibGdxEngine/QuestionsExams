@@ -36,7 +36,7 @@ class Command(BaseCommand):
             system = random.choice(systems[:1])
             topic = random.choice(topics[:1])
             text = faker.sentence()
-            chosen_answers = random.choice(list(question_answers), num_answers_to_choose)
+            chosen_answers = random.choice(list(question_answers))
             correct_answer = random.choice(chosen_answers)
 
             # Create the question
