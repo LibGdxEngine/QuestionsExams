@@ -21,9 +21,7 @@ DEBUG = env.bool("DJANGO_DEBUG", False)
 # Application definition
 
 DJANGO_APPS = [
-    'jazzmin',
     # "corsheaders",
-    'import_export',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -47,7 +45,8 @@ THIRD_PARTY_APPS = [
     "django_elasticsearch_dsl_drf",
     'django_extensions',
     'social_django',
-
+    'jazzmin',
+    'import_export',
 ]
 
 LOCAL_APPS = [
