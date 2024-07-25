@@ -26,7 +26,6 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0)),
-    path('grappelli/', include('grappelli.urls')),
     path(settings.ADMIN_URL, admin.site.urls),
     path('api/v1/health-check', health_check, name='health-check'),
     path('api/v1/user/', include('core_apps.users.urls', namespace='users')),
