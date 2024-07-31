@@ -38,6 +38,13 @@ class Year(models.Model):
     def __str__(self):
         return str(self.year)
 
+    @staticmethod
+    def filter_years(language_id, specificity_id, level_id):
+        return Year.objects.filter(
+            question__language_id=language_id,
+            question__specificity_id=specificity_id,
+            question__level_id=level_id
+        ).distinct()
 
 class Subject(models.Model):
     name = models.CharField(max_length=100)
@@ -45,6 +52,13 @@ class Subject(models.Model):
     def __str__(self):
         return self.name
 
+    @staticmethod
+    def filter_subjects(language_id, specificity_id, level_id):
+        return Subject.objects.filter(
+            question__language_id=language_id,
+            question__specificity_id=specificity_id,
+            question__level_id=level_id
+        ).distinct()
 
 class System(models.Model):
     name = models.CharField(max_length=100)
@@ -52,12 +66,27 @@ class System(models.Model):
     def __str__(self):
         return self.name
 
+    @staticmethod
+    def filter_systems(language_id, specificity_id, level_id):
+        return System.objects.filter(
+            question__language_id=language_id,
+            question__specificity_id=specificity_id,
+            question__level_id=level_id
+        ).distinct()
 
 class Topic(models.Model):
     name = models.CharField(max_length=100)
 
     def __str__(self):
         return self.name
+
+    @staticmethod
+    def filter_topics(language_id, specificity_id, level_id):
+        return Topic.objects.filter(
+            question__language_id=language_id,
+            question__specificity_id=specificity_id,
+            question__level_id=level_id
+        ).distinct()
 
 
 class QuestionAnswer(models.Model):

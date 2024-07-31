@@ -1,5 +1,6 @@
 import random
 
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -38,6 +39,23 @@ class YearViewSet(viewsets.ModelViewSet):
     serializer_class = YearSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        language_id = self.request.query_params.get('language')
+        specificity_id = self.request.query_params.get('specificity')
+        level_id = self.request.query_params.get('level')
+
+        if language_id and specificity_id and level_id:
+            queryset = queryset.filter(
+                question__language_id=language_id,
+                question__specificity_id=specificity_id,
+                question__level_id=level_id
+            ).distinct()
+        elif language_id or specificity_id or level_id:
+            raise ValidationError("Please provide all three query parameters: language, specificity, and level.")
+
+        return queryset
+
 
 class UniversityViewSet(viewsets.ModelViewSet):
     queryset = University.objects.all()
@@ -50,17 +68,68 @@ class SubjectViewSet(viewsets.ModelViewSet):
     serializer_class = SubjectSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        language_id = self.request.query_params.get('language')
+        specificity_id = self.request.query_params.get('specificity')
+        level_id = self.request.query_params.get('level')
+
+        if language_id and specificity_id and level_id:
+            queryset = queryset.filter(
+                question__language_id=language_id,
+                question__specificity_id=specificity_id,
+                question__level_id=level_id
+            ).distinct()
+        elif language_id or specificity_id or level_id:
+            raise ValidationError("Please provide all three query parameters: language, specificity, and level.")
+
+        return queryset
+
 
 class SystemViewSet(viewsets.ModelViewSet):
     queryset = System.objects.all()
     serializer_class = SystemSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        language_id = self.request.query_params.get('language')
+        specificity_id = self.request.query_params.get('specificity')
+        level_id = self.request.query_params.get('level')
+
+        if language_id and specificity_id and level_id:
+            queryset = queryset.filter(
+                question__language_id=language_id,
+                question__specificity_id=specificity_id,
+                question__level_id=level_id
+            ).distinct()
+        elif language_id or specificity_id or level_id:
+            raise ValidationError("Please provide all three query parameters: language, specificity, and level.")
+
+        return queryset
+
 
 class TopicViewSet(viewsets.ModelViewSet):
     queryset = Topic.objects.all()
     serializer_class = TopicSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        language_id = self.request.query_params.get('language')
+        specificity_id = self.request.query_params.get('specificity')
+        level_id = self.request.query_params.get('level')
+
+        if language_id and specificity_id and level_id:
+            queryset = queryset.filter(
+                question__language_id=language_id,
+                question__specificity_id=specificity_id,
+                question__level_id=level_id
+            ).distinct()
+        elif language_id or specificity_id or level_id:
+            raise ValidationError("Please provide all three query parameters: language, specificity, and level.")
+
+        return queryset
 
 
 class QuestionAnswerViewSet(viewsets.ModelViewSet):
@@ -235,11 +304,11 @@ class QuestionCountView(APIView):
             filters &= Q(topics__id__in=topics)
 
         is_used = request.GET.get('is_used')
-        if is_used is not None:
+        if is_used in ['True', 'False']:
             filters &= Q(is_used=is_used)
 
         is_correct = request.GET.get('is_correct')
-        if is_correct is not None:
+        if is_correct in ['True', 'False']:
             filters &= Q(is_correct=is_correct)
 
         count = Question.objects.filter(filters).distinct().count()
