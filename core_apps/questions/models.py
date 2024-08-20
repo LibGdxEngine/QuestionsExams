@@ -46,6 +46,7 @@ class Year(models.Model):
             question__level_id=level_id
         ).distinct()
 
+
 class Subject(models.Model):
     name = models.CharField(max_length=100)
 
@@ -60,6 +61,7 @@ class Subject(models.Model):
             question__level_id=level_id
         ).distinct()
 
+
 class System(models.Model):
     name = models.CharField(max_length=100)
 
@@ -73,6 +75,7 @@ class System(models.Model):
             question__specificity_id=specificity_id,
             question__level_id=level_id
         ).distinct()
+
 
 class Topic(models.Model):
     name = models.CharField(max_length=100)
@@ -157,3 +160,15 @@ class Report(models.Model):
 
     def __str__(self):
         return f'Report by {self.user} on {self.question}'
+
+
+class UserQuestionStatus(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    is_used = models.BooleanField(default=False)
+    is_correct = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'question')
+    def __str__(self):
+        return f'Status of {self.user} on {self.question}'

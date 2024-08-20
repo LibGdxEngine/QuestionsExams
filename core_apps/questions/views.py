@@ -170,35 +170,49 @@ class CreateExamJourneyAPIView(APIView):
         question_filter_serializer = QuestionFilterSerializer(data=request.data)
 
         if question_filter_serializer.is_valid():
-            filters = {}
+            filters = Q()
+
+            # Apply filters based on the input data
             if 'language' in question_filter_serializer.validated_data:
-                filters['language_id'] = question_filter_serializer.validated_data['language']
+                filters &= Q(language_id=question_filter_serializer.validated_data['language'])
             if 'specificity' in question_filter_serializer.validated_data:
-                filters['specificity_id'] = question_filter_serializer.validated_data['specificity']
+                filters &= Q(specificity_id=question_filter_serializer.validated_data['specificity'])
             if 'level' in question_filter_serializer.validated_data:
-                filters['level_id'] = question_filter_serializer.validated_data['level']
+                filters &= Q(level_id=question_filter_serializer.validated_data['level'])
             if 'years' in question_filter_serializer.validated_data:
-                filters['years__id__in'] = question_filter_serializer.validated_data['years']
+                filters &= Q(years__id__in=question_filter_serializer.validated_data['years'])
             if 'subjects' in question_filter_serializer.validated_data:
-                filters['subjects__id__in'] = question_filter_serializer.validated_data['subjects']
+                filters &= Q(subjects__id__in=question_filter_serializer.validated_data['subjects'])
             if 'systems' in question_filter_serializer.validated_data:
-                filters['systems__id__in'] = question_filter_serializer.validated_data['systems']
+                filters &= Q(systems__id__in=question_filter_serializer.validated_data['systems'])
             if 'topics' in question_filter_serializer.validated_data:
-                filters['topics__id__in'] = question_filter_serializer.validated_data['topics']
+                filters &= Q(topics__id__in=question_filter_serializer.validated_data['topics'])
+
+            # Filter based on is_used and is_correct fields
+            user = request.user
+            is_used = question_filter_serializer.validated_data.get('is_used')
+            if is_used is not None:
+                filters &= Q(userquestionstatus__user=user, userquestionstatus__is_used=is_used)
+
+            # Filter based on is_correct only if explicitly provided
+            is_correct = question_filter_serializer.validated_data.get('is_correct')
+            if is_correct is not None:
+                filters &= Q(userquestionstatus__user=user, userquestionstatus__is_correct=is_correct)
 
             number_of_questions = question_filter_serializer.validated_data['number_of_questions']
-            selected_questions = Question.objects.filter(**filters)
+            selected_questions = Question.objects.filter(filters).distinct()
             questions = selected_questions[:number_of_questions]
 
             if questions.count() < number_of_questions:
                 return Response({'error': 'Not enough questions available for the given filters'},
                                 status=status.HTTP_400_BAD_REQUEST)
+
             # Extract the type field from the validated data
             journey_type = question_filter_serializer.validated_data['type']
 
             exam_journey_data = {
-                'user': request.user.pk,  # Assuming you have user authentication
-                'type': journey_type,  # Use the extracted type value
+                'user': request.user.pk,
+                'type': journey_type,
                 'questions': [question.id for question in questions],
                 'current_question': 0,
                 'progress': {},
@@ -223,9 +237,38 @@ class UpdateExamJourneyAPIView(APIView):
     def patch(self, request, pk, *args, **kwargs):
         exam_journey = get_object_or_404(ExamJourney, pk=pk, user=request.user)
         serializer = ExamJourneyUpdateSerializer(exam_journey, data=request.data, partial=True)
+
         if serializer.is_valid():
+            # Save the updated exam journey
             serializer.save()
+
+            # Update UserQuestionStatus based on the progress data
+            progress_data = request.data.get('progress', {})
+
+            for question_text, question_status in progress_data.items():
+                try:
+                    # Find the question based on the question text
+                    question = Question.objects.get(text=question_status['question_text'])
+                    # Create or update the UserQuestionStatus entry
+                    user_question_status, created = UserQuestionStatus.objects.get_or_create(
+                        user=request.user,
+                        question=question,
+                        is_used=True,
+                        is_correct=question_status['is_correct']
+                    )
+
+                    if not created:
+                        # Update the status if it already exists
+                        user_question_status.is_used = True
+                        user_question_status.is_correct = question_status['is_correct']
+                        user_question_status.save()
+
+                except Question.DoesNotExist:
+                    return Response({'error': f'Question with text "{question_text}" not found.'},
+                                    status=status.HTTP_400_BAD_REQUEST)
+
             return Response(serializer.data, status=status.HTTP_200_OK)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -303,13 +346,20 @@ class QuestionCountView(APIView):
         if topics:
             filters &= Q(topics__id__in=topics)
 
+        # Filtering based on user-specific question status
+        user = request.user
+
+        # Filter questions by 'is_used' for the specific user
         is_used = request.GET.get('is_used')
         if is_used in ['True', 'False']:
-            filters &= Q(is_used=is_used)
+            is_used_filter = Q(userquestionstatus__user=user, userquestionstatus__is_used=is_used == 'True')
+            filters &= is_used_filter
 
+        # Filter questions by 'is_correct' for the specific user
         is_correct = request.GET.get('is_correct')
         if is_correct in ['True', 'False']:
-            filters &= Q(is_correct=is_correct)
+            is_correct_filter = Q(userquestionstatus__user=user, userquestionstatus__is_correct=is_correct == 'True')
+            filters &= is_correct_filter
 
         count = Question.objects.filter(filters).distinct().count()
         return Response({'count': count}, status=status.HTTP_200_OK)

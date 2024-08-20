@@ -55,7 +55,7 @@ class UpdateProfileAPIView(generics.UpdateAPIView):
         serializer = self.get_serializer(profile, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 
 class FollowersListView(APIView):

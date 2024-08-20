@@ -2,7 +2,7 @@ from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 
 from .models import Language, Specificity, Level, Year, Subject, System, Topic, Question, ExamJourney, QuestionAnswer, \
-    Report, University
+    Report, University, UserQuestionStatus
 from .resources import QuestionResource
 
 
@@ -26,3 +26,4 @@ admin.site.register(Topic)
 admin.site.register(QuestionAnswer)
 admin.site.register(ExamJourney)
 admin.site.register(Report)
+admin.site.register(UserQuestionStatus)

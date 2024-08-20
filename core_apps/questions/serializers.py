@@ -122,10 +122,11 @@ class QuestionFilterSerializer(serializers.Serializer):
     topics = serializers.ListField(child=serializers.IntegerField(), required=False)
     number_of_questions = serializers.IntegerField()
     type = serializers.ChoiceField(choices=ExamJourney._meta.get_field('type').choices, required=True)
-
+    is_used = serializers.BooleanField(required=False)
+    is_correct = serializers.BooleanField(required=False)
 
 class NoteSerializer(serializers.ModelSerializer):
-    question = QuestionSerializer()
+    question = serializers.PrimaryKeyRelatedField(queryset=Question.objects.all())
 
     class Meta:
         model = Note
@@ -136,6 +137,13 @@ class NoteSerializer(serializers.ModelSerializer):
         # Automatically set the user from the request
         validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
+
+    def to_representation(self, instance):
+        # Use the parent's representation
+        ret = super().to_representation(instance)
+        # Replace 'question' field with the serialized data from QuestionSerializer
+        ret['question'] = QuestionSerializer(instance.question).data
+        return ret
 
 
 class ReportSerializer(serializers.ModelSerializer):
