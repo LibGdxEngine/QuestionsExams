@@ -168,7 +168,5 @@ class UserQuestionStatus(models.Model):
     is_used = models.BooleanField(default=False)
     is_correct = models.BooleanField(default=False)
 
-    class Meta:
-        unique_together = ('user', 'question')
     def __str__(self):
         return f'Status of {self.user} on {self.question}'

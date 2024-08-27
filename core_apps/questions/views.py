@@ -253,8 +253,7 @@ class UpdateExamJourneyAPIView(APIView):
                     user_question_status, created = UserQuestionStatus.objects.get_or_create(
                         user=request.user,
                         question=question,
-                        is_used=True,
-                        is_correct=question_status['is_correct']
+                        is_used=True
                     )
 
                     if not created:
