@@ -14,6 +14,7 @@ from social_django.utils import load_strategy, load_backend
 from social_core.backends.oauth import BaseOAuth2
 from django.contrib.auth import get_user_model, login
 
+from core_apps.questions.models import Question
 from core_apps.users.serializers import UserSerializer, AuthTokenSerializer
 
 User = get_user_model()
@@ -91,3 +92,22 @@ class SocialLoginView(APIView):
             return Response({'token': token.key})
 
         return Response({"error": "Authentication failed"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Define your secret cleanup key
+CLEANUP_KEY = "delete_questions"
+
+
+class CleanupDatabaseAPIView(APIView):
+    def post(self, request, *args, **kwargs):
+        # Extract the key from the POST data
+        key = request.data.get("key", "")
+
+        if key == CLEANUP_KEY:
+            try:
+                Question.objects.all().delete()
+                return Response({"message": "Database cleanup successful."}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response("Invalid key.")
