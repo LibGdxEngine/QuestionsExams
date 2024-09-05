@@ -6,7 +6,12 @@ DEBUG = False
 ADMINS = [("Ahmed Fathy", "letaskono.app@gmail.com")]
 
 # TODO: add domain name of the production server
-CSRF_TRUSTED_ORIGINS = ["http://app.krokplus.com", "https://app.krokplus.com", "htts://www.krokplus.com",
+CSRF_TRUSTED_ORIGINS = ["http://app.krokplus.com", "https://app.krokplus.com", "https://admin.krokplus.com",
+                        "http://www.admin.krokplus.com",
+                        "https://www.admin.krokplus.com",
+                        "https://krokplus.com",
+                        "http://krokplus.com",
+                        "http://admin.krokplus.com", "htts://www.krokplus.com",
                         "https://www.krokplus.com", "http://localhost:8000",
                         "http://93.127.203.112"]
 
