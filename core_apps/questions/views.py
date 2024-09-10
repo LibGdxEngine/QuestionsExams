@@ -331,18 +331,26 @@ class QuestionCountView(APIView):
 
         years = request.GET.getlist('years')
         if years:
-            filters &= Q(years__id__in=years)
+            # Ensure all values are integers
+            try:
+                years = [year for year in years[0].split(",")]
+                filters &= Q(years__id__in=years)
+            except ValueError:
+                return Response({'error': 'Invalid years format'}, status=status.HTTP_400_BAD_REQUEST)
 
         subjects = request.GET.getlist('subjects')
         if subjects:
+            subjects = [subject for subject in subjects[0].split(",")]
             filters &= Q(subjects__id__in=subjects)
 
         systems = request.GET.getlist('systems')
         if systems:
+            systems = [system for system in systems[0].split(",")]
             filters &= Q(systems__id__in=systems)
 
         topics = request.GET.getlist('topics')
         if topics:
+            topics = [topic for topic in topics[0].split(",")]
             filters &= Q(topics__id__in=topics)
 
         # Filtering based on user-specific question status
