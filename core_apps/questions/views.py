@@ -244,7 +244,6 @@ class UpdateExamJourneyAPIView(APIView):
 
             # Update UserQuestionStatus based on the progress data
             progress_data = request.data.get('progress', {})
-
             for question_text, question_status in progress_data.items():
                 try:
                     # Find the question based on the question text
@@ -255,11 +254,10 @@ class UpdateExamJourneyAPIView(APIView):
                         question=question,
                         is_used=True
                     )
-
                     if not created:
                         # Update the status if it already exists
                         user_question_status.is_used = True
-                        user_question_status.is_correct = question_status['is_correct']
+                        user_question_status.is_correct = question.answers.all()[question_status['answer']] == question.correct_answer
                         user_question_status.save()
 
                 except Question.DoesNotExist:

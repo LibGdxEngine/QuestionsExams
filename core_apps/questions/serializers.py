@@ -77,14 +77,13 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 class QuestionSerializer(serializers.ModelSerializer):
     answers = AnswerSerializer(many=True, read_only=True)
-    correct_answer = AnswerSerializer(read_only=True)
     language = LanguageSerializer(read_only=True)
     specificity = LanguageSerializer(read_only=True)
     level = LevelSerializer(read_only=True)
 
     class Meta:
         model = Question
-        fields = '__all__'
+        exclude = ['correct_answer']  # Exclude correct_answer from fields
 
 
 class FavoriteListSerializer(serializers.ModelSerializer):
