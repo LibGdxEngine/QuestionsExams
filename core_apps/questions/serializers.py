@@ -108,7 +108,33 @@ class ExamJourneySerializer(serializers.ModelSerializer):
 class ExamJourneyUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExamJourney
-        fields = ['time_left', 'progress', 'current_question']
+        fields = ['time_left', 'progress', 'current_question']  
+
+    def update(self, instance, validated_data):
+        # Get the progress from validated_data or from the instance if not present
+        progress = validated_data.get('progress', instance.progress)
+        print(self.context)
+        # Loop through the progress data and update it with 'is_correct'
+        for question_text, question_status in progress.items():
+            question = Question.objects.get(text=question_status['question_text'])
+            user_question_status, created = UserQuestionStatus.objects.get_or_create(
+                user=self.context['request'].user,
+                question=question,
+                is_used=True
+            )
+            if not created:
+                user_question_status.is_correct = question.answers.all(
+                )[question_status['answer']] == question.correct_answer
+                user_question_status.save()
+
+            # Add the 'is_correct' to the progress dict
+            progress[question_text]['is_correct'] = user_question_status.is_correct
+
+        # Save the updated progress back to the instance
+        instance.progress = progress
+        instance.save()
+
+        return instance
 
 
 class QuestionFilterSerializer(serializers.Serializer):

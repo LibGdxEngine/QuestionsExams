@@ -200,7 +200,7 @@ class CreateExamJourneyAPIView(APIView):
                 filters &= Q(userquestionstatus__user=user, userquestionstatus__is_correct=is_correct)
 
             number_of_questions = question_filter_serializer.validated_data['number_of_questions']
-            selected_questions = Question.objects.filter(filters).distinct()
+            selected_questions = Question.objects.filter(filters).distinct().order_by('?')
             questions = selected_questions[:number_of_questions]
 
             if questions.count() < number_of_questions:
@@ -236,12 +236,10 @@ class UpdateExamJourneyAPIView(APIView):
 
     def patch(self, request, pk, *args, **kwargs):
         exam_journey = get_object_or_404(ExamJourney, pk=pk, user=request.user)
-        serializer = ExamJourneyUpdateSerializer(exam_journey, data=request.data, partial=True)
+        serializer = ExamJourneyUpdateSerializer(
+            exam_journey, data=request.data, partial=True,  context={'request': request})
 
         if serializer.is_valid():
-            # Save the updated exam journey
-            serializer.save()
-
             # Update UserQuestionStatus based on the progress data
             progress_data = request.data.get('progress', {})
             for question_text, question_status in progress_data.items():
@@ -260,11 +258,14 @@ class UpdateExamJourneyAPIView(APIView):
                         user_question_status.is_correct = question.answers.all()[question_status['answer']] == question.correct_answer
                         user_question_status.save()
 
+                    # Save the updated exam journey
+                    serializer.save()
                 except Question.DoesNotExist:
                     return Response({'error': f'Question with text "{question_text}" not found.'},
                                     status=status.HTTP_400_BAD_REQUEST)
-
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            data = serializer.data
+            data['is_correct'] = user_question_status.is_correct
+            return Response(data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
