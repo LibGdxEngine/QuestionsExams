@@ -113,7 +113,6 @@ class ExamJourneyUpdateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         # Get the progress from validated_data or from the instance if not present
         progress = validated_data.get('progress', instance.progress)
-        print(self.context)
         # Loop through the progress data and update it with 'is_correct'
         for question_text, question_status in progress.items():
             question = Question.objects.get(text=question_status['question_text'])
@@ -126,7 +125,6 @@ class ExamJourneyUpdateSerializer(serializers.ModelSerializer):
                 user_question_status.is_correct = question.answers.all(
                 )[question_status['answer']] == question.correct_answer
                 user_question_status.save()
-
             # Add the 'is_correct' to the progress dict
             progress[question_text]['is_correct'] = user_question_status.is_correct
 
