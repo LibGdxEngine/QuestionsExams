@@ -200,7 +200,7 @@ class CreateExamJourneyAPIView(APIView):
                 filters &= Q(userquestionstatus__user=user, userquestionstatus__is_correct=is_correct)
 
             number_of_questions = question_filter_serializer.validated_data['number_of_questions']
-            selected_questions = Question.objects.filter(filters).distinct().order_by('?')
+            selected_questions = Question.objects.filter(filters).distinct()
             questions = selected_questions[:number_of_questions]
 
             if questions.count() < number_of_questions:
@@ -209,7 +209,7 @@ class CreateExamJourneyAPIView(APIView):
 
             # Extract the type field from the validated data
             journey_type = question_filter_serializer.validated_data['type']
-
+            print(questions)
             exam_journey_data = {
                 'user': request.user.pk,
                 'type': journey_type,
@@ -366,7 +366,7 @@ class QuestionCountView(APIView):
         if is_correct in ['True', 'False']:
             is_correct_filter = Q(userquestionstatus__user=user, userquestionstatus__is_correct=is_correct == 'True')
             filters &= is_correct_filter
-
+        print(Question.objects.filter(filters).distinct())
         count = Question.objects.filter(filters).distinct().count()
         return Response({'count': count}, status=status.HTTP_200_OK)
 
