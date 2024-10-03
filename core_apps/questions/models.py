@@ -93,6 +93,8 @@ class Topic(models.Model):
 
 
 class QuestionAnswer(models.Model):
+    question = models.ForeignKey('Question',null=True, blank=True,
+                                  on_delete=models.CASCADE, related_name='q_answers')
     answer = models.CharField(max_length=300)
 
     def __str__(self):
@@ -110,8 +112,9 @@ class Question(models.Model):
     topics = models.ManyToManyField(Topic)
     hint = models.CharField(max_length=300, blank=True, default="")
     video_hint = models.URLField(blank=True, default="")
-    answers = models.ManyToManyField(QuestionAnswer, related_name='questions')
-    correct_answer = models.ForeignKey(QuestionAnswer, on_delete=models.CASCADE)
+    # answers = models.ManyToManyField(QuestionAnswer, related_name='questions')
+    correct_answer = models.ForeignKey(QuestionAnswer,null=True,blank=True, on_delete=models.CASCADE,
+                                        related_name='correct_questions')
     is_used = models.BooleanField(default=False)
     is_correct = models.BooleanField(default=False)
 

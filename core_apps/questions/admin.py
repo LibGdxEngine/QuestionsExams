@@ -5,6 +5,13 @@ from .models import Language, Specificity, Level, Year, Subject, System, Topic, 
     Report, University, UserQuestionStatus
 from .resources import QuestionResource
 
+# Inline Model for QuestionAnswer
+class QuestionAnswerInline(admin.TabularInline):
+    model = QuestionAnswer
+    extra = 1  # Number of empty answer fields to show by default
+    min_num = 1  # Ensure at least one answer is required
+    can_delete = True  # Allow deletion of answers
+
 
 @admin.register(Question)
 class QuestionAdmin(ImportExportModelAdmin):
@@ -13,13 +20,16 @@ class QuestionAdmin(ImportExportModelAdmin):
     search_fields = ['text', 'language__name', 'specificity__name', 'level__name']
     list_filter = ['language', 'specificity', 'level', 'years', 'subjects', 'systems', 'topics']
     filter_horizontal = ['years', 'subjects', 'systems', 'topics']
-
+    exclude = ['is_used', 'is_correct']
+    # Add the QuestionAnswerInline to the QuestionAdmin
+    inlines = [QuestionAnswerInline]
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "correct_answer":
             # Only show the QuestionAnswer options that are related to this question
             if request.resolver_match.kwargs.get('object_id'):
                 question_id = request.resolver_match.kwargs.get('object_id')
-                kwargs["queryset"] = QuestionAnswer.objects.filter(questions__id=question_id)
+                print(question_id)
+                kwargs["queryset"] = QuestionAnswer.objects.filter(question__id=question_id)
             else:
                 kwargs["queryset"] = QuestionAnswer.objects.none()  # No options if there's no question instance
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
