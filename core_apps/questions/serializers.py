@@ -76,7 +76,7 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 
 class QuestionSerializer(serializers.ModelSerializer):
-    answers = AnswerSerializer(many=True, read_only=True)
+    answers = AnswerSerializer(many=True, read_only=True, source='q_answers')
     language = LanguageSerializer(read_only=True)
     specificity = LanguageSerializer(read_only=True)
     level = LevelSerializer(read_only=True)
@@ -122,7 +122,7 @@ class ExamJourneyUpdateSerializer(serializers.ModelSerializer):
                 is_used=True
             )
             if not created:
-                user_question_status.is_correct = question.answers.all(
+                user_question_status.is_correct = question.q_answers.all(
                 )[question_status['answer']] == question.correct_answer
                 user_question_status.save()
             # Add the 'is_correct' to the progress dict

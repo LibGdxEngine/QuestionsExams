@@ -382,7 +382,7 @@ class QuestionSearchView(ListView):
         if search_term:
             queryset = Question.objects.filter(
                 Q(text__icontains=search_term) |
-                Q(answers__answer__icontains=search_term)
+                Q(q_answers__answer__icontains=search_term)
             ).distinct()
         else:
             queryset = Question.objects.none()
@@ -399,7 +399,7 @@ class QuestionSearchView(ListView):
                 'video_hint': question.video_hint,
                 'is_used': question.is_used,
                 'is_correct': question.is_correct,
-                'answers': list(question.answers.values('id', 'answer')),
+                'answers': list(question.q_answers.values('id', 'answer')),
                 'correct_answer': str(question.correct_answer),
                 'language': question.language.name,
                 'specificity': question.specificity.name,
