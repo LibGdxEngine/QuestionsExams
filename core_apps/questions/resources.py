@@ -200,8 +200,7 @@ class QuestionResource(resources.ModelResource):
 
         answers_list = list(question.q_answers.all())
         try:
-            correct_answer_index = question.correct_answer
-            print(correct_answer_index)
+            correct_answer_index = answers_list.index(question.correct_answer)
             return correct_answer_index
         except ValueError:
             return ''  # Return an empty string if no correct answer is found
