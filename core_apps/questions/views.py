@@ -255,7 +255,7 @@ class UpdateExamJourneyAPIView(APIView):
                     if not created:
                         # Update the status if it already exists
                         user_question_status.is_used = True
-                        user_question_status.is_correct = question.answers.all()[question_status['answer']] == question.correct_answer
+                        user_question_status.is_correct = question.q_answers.all()[question_status['answer']] == question.correct_answer
                         user_question_status.save()
 
                     # Save the updated exam journey
