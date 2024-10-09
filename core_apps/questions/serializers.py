@@ -97,9 +97,35 @@ class FavoriteListSerializer(serializers.ModelSerializer):
         }
 
 
+class ExamJourneySerializerV2(serializers.ModelSerializer):
+    questions = QuestionSerializer(many=True, read_only=True)
+    progress = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ExamJourney
+        fields = '__all__'
+
+    def get_progress(self, obj):
+        # Assuming that you want to transform the dictionary into a list of values
+        # Modify this logic depending on the structure of your progress dictionary
+        progress_dict = obj.progress
+        progress_list = []
+
+        # Convert dict to a list
+        for key, value in progress_dict.items():
+            # You can append as key-value pairs or just the values
+            progress_list.append({
+                'question_text': value['question_text'],
+                'answer': value['answer'],
+                'is_correct': value['is_correct'],
+                'correct_answer': value['correct_answer']
+            })
+
+        return progress_list
+    
 class ExamJourneySerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
-
+    
     class Meta:
         model = ExamJourney
         fields = '__all__'
@@ -127,11 +153,10 @@ class ExamJourneyUpdateSerializer(serializers.ModelSerializer):
                 user_question_status.save()
             # Add the 'is_correct' to the progress dict
             progress[question_text]['is_correct'] = user_question_status.is_correct
-
+            progress[question_text]['correct_answer'] = question.correct_answer.answer
         # Save the updated progress back to the instance
         instance.progress = progress
         instance.save()
-
         return instance
 
 

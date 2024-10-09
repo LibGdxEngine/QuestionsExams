@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic import ListView
 from rest_framework import status, authentication
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import CreateAPIView, ListAPIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import viewsets
@@ -144,6 +144,23 @@ class QuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
+class ExamJourneyListCreateViewV2(ListAPIView):
+    serializer_class = ExamJourneySerializerV2
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    filter_backends = [filters.SearchFilter]
+    search_fields = [
+        'type',
+        'questions__text',
+        'questions__language__name',
+        'questions__specificity__name',
+        'questions__level__name',
+        'questions__correct_answer__answer'
+    ]
+
+    def get_queryset(self):
+        # Filter ExamJourney objects by the logged-in user
+        return ExamJourney.objects.filter(user=self.request.user)
+    
 class ExamJourneyViewSet(viewsets.ModelViewSet):
     queryset = ExamJourney.objects.all()
     serializer_class = ExamJourneySerializer

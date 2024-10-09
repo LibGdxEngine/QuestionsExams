@@ -4,7 +4,7 @@ from .views import (
     LanguageViewSet, SpecificityViewSet, LevelViewSet, YearViewSet,
     SubjectViewSet, SystemViewSet, TopicViewSet, QuestionAnswerViewSet,
     QuestionViewSet, FavoriteListViewSet, ExamJourneyViewSet, CreateExamJourneyAPIView, UpdateExamJourneyAPIView,
-    NoteViewSet, QuestionSearchView, ReportView, QuestionCountView, UniversityViewSet
+    NoteViewSet, QuestionSearchView, ReportView, QuestionCountView, UniversityViewSet, ExamJourneyListCreateViewV2
 )
 
 app_name = 'questions'

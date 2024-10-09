@@ -38,6 +38,7 @@ urlpatterns = [
     path("api/v1/responses/", include("core_apps.responses.urls")),
     path("api/v1/elastic/", include("core_apps.search.urls")),
     path('api/v1/questions/', include('core_apps.questions.urls')),
+    path('api/v2/questions/', include('core_apps.questions.urls_v2')),
 ]
 
 admin.site.site_header = "{} Admin Panel".format(app_name)
