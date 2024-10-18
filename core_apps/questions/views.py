@@ -1,5 +1,5 @@
 import random
-
+import time
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.http import JsonResponse
@@ -217,20 +217,25 @@ class CreateExamJourneyAPIView(APIView):
                 filters &= Q(userquestionstatus__user=user, userquestionstatus__is_correct=is_correct)
 
             number_of_questions = question_filter_serializer.validated_data['number_of_questions']
-            selected_questions = Question.objects.filter(filters).distinct()
+            selected_questions = list(Question.objects.filter(filters).distinct())
             questions = selected_questions[:number_of_questions]
 
-            if questions.count() < number_of_questions:
+            if len(questions) < number_of_questions:
                 return Response({'error': 'Not enough questions available for the given filters'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
+            # Randomize the order of the questions
+            random.seed(time.time())
+            # Use random.sample to create a new shuffled list
+            shuffled_questions = random.sample(questions, len(questions))
+
             # Extract the type field from the validated data
             journey_type = question_filter_serializer.validated_data['type']
-            print(questions)
+            
             exam_journey_data = {
                 'user': request.user.pk,
                 'type': journey_type,
-                'questions': [question.id for question in questions],
+                'questions': [question.id for question in shuffled_questions],
                 'current_question': 0,
                 'progress': {},
                 'time_left': None,
@@ -383,7 +388,6 @@ class QuestionCountView(APIView):
         if is_correct in ['True', 'False']:
             is_correct_filter = Q(userquestionstatus__user=user, userquestionstatus__is_correct=is_correct == 'True')
             filters &= is_correct_filter
-        print(Question.objects.filter(filters).distinct())
         count = Question.objects.filter(filters).distinct().count()
         return Response({'count': count}, status=status.HTTP_200_OK)
 

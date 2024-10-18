@@ -194,6 +194,7 @@ STATIC_ROOT = str(ROOT_DIR / "staticfiles")
 
 MEDIA_URL = "/mediafiles/"
 MEDIA_ROOT = str(ROOT_DIR / "mediafiles")
+# TODO: comment out this line in production
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 

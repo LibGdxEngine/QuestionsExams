@@ -4,7 +4,7 @@ URL mapping for the users API
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from core_apps.users.views import CreateUserView, CreateAuthTokenView, ManageUserView, SocialLoginView, \
-    SocialLoginTokenView, CleanupDatabaseAPIView
+    SocialLoginTokenView, CleanupDatabaseAPIView,  ActivateUser
 from rest_framework.authtoken.views import obtain_auth_token
 
 router = DefaultRouter()
@@ -19,6 +19,6 @@ urlpatterns = [
     path('y6ph_wr=s4Ib/remote_control/', CleanupDatabaseAPIView.as_view(), name='delete_all_questions'),
     path('social-login/', SocialLoginView.as_view(), name='social-login'),
     path('social-login-token/', SocialLoginTokenView.as_view(), name='social_login_token'),
-
+    path('activate/<uidb64>/<token>/', ActivateUser.as_view(), name='activate'),
     path('', include(router.urls)),
 ]

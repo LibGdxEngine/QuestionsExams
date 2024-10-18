@@ -22,9 +22,12 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
-EMAIL_HOST = env("EMAIL_HOST", default="mailhog")
-EMAIL_PORT = env("EMAIL_PORT", default=4321)
-DEFAULT_FROM_EMAIL = "support@apiimperfect.site"
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'letaskono.app2@gmail.com'
+EMAIL_HOST_PASSWORD = 'rqqy frdv yyfe hmtc'
+DEFAULT_FROM_EMAIL = 'krokplus313@gmail.com'
 DOMAIN = env("DOMAIN", default="")
-SITE_NAME = "Authors Haven"
+SITE_NAME = "Krok plus"

@@ -27,7 +27,7 @@ class Profile(TimeStampedModel):
 
     user = models.OneToOneField(User, related_name="profile", on_delete=models.CASCADE)
     phone_number = PhoneNumberField(
-        verbose_name=_("phone number"), max_length=30, default="+250784123456"
+        verbose_name=_("phone number"), max_length=30, blank=True, null=True, default=None
     )
     university = models.TextField(
         verbose_name=_("university"),

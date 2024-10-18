@@ -56,11 +56,11 @@ EMAIL_SUBJECT_PREFIX = env("DJANGO_EMAIL_SUBJECT_PREFIX", default="[Sahm Nakheel
 EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
 EMAIL_HOST = env("EMAIL_HOST", default="mailhog")
 EMAIL_PORT = env("EMAIL_PORT", default='5432')
-DEFAULT_FROM_EMAIL = "ahmed.fathy1445@gmail.com"
+DEFAULT_FROM_EMAIL = "krokplus313@gmail.com"
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default='')
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default='')
+EMAIL_HOST_PASSWORD = "rqqy frdv yyfe hmtc"
 DOMAIN = env("DOMAIN", default='localhost')
 # Additional settings
 CELERY_EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

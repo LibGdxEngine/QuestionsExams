@@ -49,6 +49,8 @@ class AuthTokenSerializer(serializers.Serializer):
         if not user:
             msg = _('Unable to authenticate with provided credentials')
             raise serializers.ValidationError("Invalid credentials", msg)
+        if not user.is_active:
+            raise serializers.ValidationError(_('Please activate your account first.'))
 
         attrs['user'] = user
         return attrs
