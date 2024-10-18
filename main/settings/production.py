@@ -46,22 +46,22 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="Letaskono Support <letaskono-zwaj.com>", )
 
-SITE_NAME = 'Sahm Nakheel'
 
 SERVER_EMAIL = env("DJANGO_SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
 
 EMAIL_SUBJECT_PREFIX = env("DJANGO_EMAIL_SUBJECT_PREFIX", default="[Sahm Nakheel]")
 
 # gmail smtp setup
-EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
-EMAIL_HOST = env("EMAIL_HOST", default="mailhog")
-EMAIL_PORT = env("EMAIL_PORT", default='5432')
-DEFAULT_FROM_EMAIL = "krokplus313@gmail.com"
+# EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False
-EMAIL_HOST_USER = env("EMAIL_HOST_USER", default='')
-EMAIL_HOST_PASSWORD = "rqqy frdv yyfe hmtc"
-DOMAIN = env("DOMAIN", default='localhost')
+EMAIL_HOST_USER = 'letaskono.app2@gmail.com'
+EMAIL_HOST_PASSWORD = 'rqqy frdv yyfe hmtc'
+DEFAULT_FROM_EMAIL = 'krokplus313@gmail.com'
+DOMAIN = env("DOMAIN", default='krokplus.com')
+SITE_NAME = "Krok plus"
 # Additional settings
 CELERY_EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 CELERY_EMAIL_TASK_CONFIG = {
