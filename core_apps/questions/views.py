@@ -41,18 +41,20 @@ class YearViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        language_id = self.request.query_params.get('language')
-        specificity_id = self.request.query_params.get('specificity')
-        level_id = self.request.query_params.get('level')
+        language_id = self.request.query_params.get("language")
+        specificity_id = self.request.query_params.get("specificity")
+        level_id = self.request.query_params.get("level")
 
         if language_id and specificity_id and level_id:
             queryset = queryset.filter(
                 question__language_id=language_id,
                 question__specificity_id=specificity_id,
-                question__level_id=level_id
+                question__level_id=level_id,
             ).distinct()
         elif language_id or specificity_id or level_id:
-            raise ValidationError("Please provide all three query parameters: language, specificity, and level.")
+            raise ValidationError(
+                "Please provide all three query parameters: language, specificity, and level."
+            )
 
         return queryset
 
@@ -70,18 +72,20 @@ class SubjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        language_id = self.request.query_params.get('language')
-        specificity_id = self.request.query_params.get('specificity')
-        level_id = self.request.query_params.get('level')
+        language_id = self.request.query_params.get("language")
+        specificity_id = self.request.query_params.get("specificity")
+        level_id = self.request.query_params.get("level")
 
         if language_id and specificity_id and level_id:
             queryset = queryset.filter(
                 question__language_id=language_id,
                 question__specificity_id=specificity_id,
-                question__level_id=level_id
+                question__level_id=level_id,
             ).distinct()
         elif language_id or specificity_id or level_id:
-            raise ValidationError("Please provide all three query parameters: language, specificity, and level.")
+            raise ValidationError(
+                "Please provide all three query parameters: language, specificity, and level."
+            )
 
         return queryset
 
@@ -93,18 +97,20 @@ class SystemViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        language_id = self.request.query_params.get('language')
-        specificity_id = self.request.query_params.get('specificity')
-        level_id = self.request.query_params.get('level')
+        language_id = self.request.query_params.get("language")
+        specificity_id = self.request.query_params.get("specificity")
+        level_id = self.request.query_params.get("level")
 
         if language_id and specificity_id and level_id:
             queryset = queryset.filter(
                 question__language_id=language_id,
                 question__specificity_id=specificity_id,
-                question__level_id=level_id
+                question__level_id=level_id,
             ).distinct()
         elif language_id or specificity_id or level_id:
-            raise ValidationError("Please provide all three query parameters: language, specificity, and level.")
+            raise ValidationError(
+                "Please provide all three query parameters: language, specificity, and level."
+            )
 
         return queryset
 
@@ -116,18 +122,20 @@ class TopicViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        language_id = self.request.query_params.get('language')
-        specificity_id = self.request.query_params.get('specificity')
-        level_id = self.request.query_params.get('level')
+        language_id = self.request.query_params.get("language")
+        specificity_id = self.request.query_params.get("specificity")
+        level_id = self.request.query_params.get("level")
 
         if language_id and specificity_id and level_id:
             queryset = queryset.filter(
                 question__language_id=language_id,
                 question__specificity_id=specificity_id,
-                question__level_id=level_id
+                question__level_id=level_id,
             ).distinct()
         elif language_id or specificity_id or level_id:
-            raise ValidationError("Please provide all three query parameters: language, specificity, and level.")
+            raise ValidationError(
+                "Please provide all three query parameters: language, specificity, and level."
+            )
 
         return queryset
 
@@ -149,35 +157,48 @@ class ExamJourneyListCreateViewV2(ListAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter]
     search_fields = [
-        'type',
-        'questions__text',
-        'questions__language__name',
-        'questions__specificity__name',
-        'questions__level__name',
-        'questions__correct_answer__answer'
+        "type",
+        "questions__text",
+        "questions__language__name",
+        "questions__specificity__name",
+        "questions__level__name",
+        "questions__correct_answer__answer",
     ]
 
     def get_queryset(self):
         # Filter ExamJourney objects by the logged-in user
         return ExamJourney.objects.filter(user=self.request.user)
-    
+
+
 class ExamJourneyViewSet(viewsets.ModelViewSet):
     queryset = ExamJourney.objects.all()
     serializer_class = ExamJourneySerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter]
     search_fields = [
-        'type',
-        'questions__text',
-        'questions__language__name',
-        'questions__specificity__name',
-        'questions__level__name',
-        'questions__correct_answer__answer'
+        "type",
+        "questions__text",
+        "questions__language__name",
+        "questions__specificity__name",
+        "questions__level__name",
+        "questions__correct_answer__answer",
     ]
 
     def get_queryset(self):
         # Filter ExamJourney objects by the logged-in user
         return ExamJourney.objects.filter(user=self.request.user)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        data = serializer.data
+
+        # Randomize the order of questions
+        questions = data["questions"]
+        random.shuffle(questions)
+        data["questions"] = questions
+
+        return Response(data)
 
 
 class CreateExamJourneyAPIView(APIView):
@@ -190,39 +211,66 @@ class CreateExamJourneyAPIView(APIView):
             filters = Q()
 
             # Apply filters based on the input data
-            if 'language' in question_filter_serializer.validated_data:
-                filters &= Q(language_id=question_filter_serializer.validated_data['language'])
-            if 'specificity' in question_filter_serializer.validated_data:
-                filters &= Q(specificity_id=question_filter_serializer.validated_data['specificity'])
-            if 'level' in question_filter_serializer.validated_data:
-                filters &= Q(level_id=question_filter_serializer.validated_data['level'])
-            if 'years' in question_filter_serializer.validated_data:
-                filters &= Q(years__id__in=question_filter_serializer.validated_data['years'])
-            if 'subjects' in question_filter_serializer.validated_data:
-                filters &= Q(subjects__id__in=question_filter_serializer.validated_data['subjects'])
-            if 'systems' in question_filter_serializer.validated_data:
-                filters &= Q(systems__id__in=question_filter_serializer.validated_data['systems'])
-            if 'topics' in question_filter_serializer.validated_data:
-                filters &= Q(topics__id__in=question_filter_serializer.validated_data['topics'])
+            if "language" in question_filter_serializer.validated_data:
+                filters &= Q(
+                    language_id=question_filter_serializer.validated_data["language"]
+                )
+            if "specificity" in question_filter_serializer.validated_data:
+                filters &= Q(
+                    specificity_id=question_filter_serializer.validated_data[
+                        "specificity"
+                    ]
+                )
+            if "level" in question_filter_serializer.validated_data:
+                filters &= Q(
+                    level_id=question_filter_serializer.validated_data["level"]
+                )
+            if "years" in question_filter_serializer.validated_data:
+                filters &= Q(
+                    years__id__in=question_filter_serializer.validated_data["years"]
+                )
+            if "subjects" in question_filter_serializer.validated_data:
+                filters &= Q(
+                    subjects__id__in=question_filter_serializer.validated_data[
+                        "subjects"
+                    ]
+                )
+            if "systems" in question_filter_serializer.validated_data:
+                filters &= Q(
+                    systems__id__in=question_filter_serializer.validated_data["systems"]
+                )
+            if "topics" in question_filter_serializer.validated_data:
+                filters &= Q(
+                    topics__id__in=question_filter_serializer.validated_data["topics"]
+                )
 
             # Filter based on is_used and is_correct fields
             user = request.user
-            is_used = question_filter_serializer.validated_data.get('is_used')
+            is_used = question_filter_serializer.validated_data.get("is_used")
             if is_used is not None:
-                filters &= Q(userquestionstatus__user=user, userquestionstatus__is_used=is_used)
+                filters &= Q(
+                    userquestionstatus__user=user, userquestionstatus__is_used=is_used
+                )
 
             # Filter based on is_correct only if explicitly provided
-            is_correct = question_filter_serializer.validated_data.get('is_correct')
+            is_correct = question_filter_serializer.validated_data.get("is_correct")
             if is_correct is not None:
-                filters &= Q(userquestionstatus__user=user, userquestionstatus__is_correct=is_correct)
+                filters &= Q(
+                    userquestionstatus__user=user,
+                    userquestionstatus__is_correct=is_correct,
+                )
 
-            number_of_questions = question_filter_serializer.validated_data['number_of_questions']
+            number_of_questions = question_filter_serializer.validated_data[
+                "number_of_questions"
+            ]
             selected_questions = list(Question.objects.filter(filters).distinct())
             questions = selected_questions[:number_of_questions]
 
             if len(questions) < number_of_questions:
-                return Response({'error': 'Not enough questions available for the given filters'},
-                                status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Not enough questions available for the given filters"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             # Randomize the order of the questions
             random.seed(time.time())
@@ -230,65 +278,125 @@ class CreateExamJourneyAPIView(APIView):
             shuffled_questions = random.sample(questions, len(questions))
 
             # Extract the type field from the validated data
-            journey_type = question_filter_serializer.validated_data['type']
-            
+            journey_type = question_filter_serializer.validated_data["type"]
+
             exam_journey_data = {
-                'user': request.user.pk,
-                'type': journey_type,
-                'questions': [question.id for question in shuffled_questions],
-                'current_question': 0,
-                'progress': {},
-                'time_left': None,
+                "user": request.user.pk,
+                "type": journey_type,
+                "questions": [question.id for question in shuffled_questions],
+                "current_question": 0,
+                "progress": {},
+                "time_left": None,
             }
 
             exam_journey_serializer = ExamJourneySerializer(data=exam_journey_data)
             if exam_journey_serializer.is_valid():
                 exam_journey = exam_journey_serializer.save()
                 exam_journey.questions.set(questions)
-                return Response(ExamJourneySerializer(exam_journey).data, status=status.HTTP_201_CREATED)
+                return Response(
+                    ExamJourneySerializer(exam_journey).data,
+                    status=status.HTTP_201_CREATED,
+                )
 
-            return Response(exam_journey_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                exam_journey_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )
 
-        return Response(question_filter_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            question_filter_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class UpdateExamJourneyAPIView(APIView):
-    authentication_classes = [authentication.TokenAuthentication, authentication.SessionAuthentication]
+    authentication_classes = [
+        authentication.TokenAuthentication,
+        authentication.SessionAuthentication,
+    ]
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def patch(self, request, pk, *args, **kwargs):
         exam_journey = get_object_or_404(ExamJourney, pk=pk, user=request.user)
         serializer = ExamJourneyUpdateSerializer(
-            exam_journey, data=request.data, partial=True,  context={'request': request})
+            exam_journey, data=request.data, partial=True, context={"request": request}
+        )
 
         if serializer.is_valid():
-            # Update UserQuestionStatus based on the progress data
-            progress_data = request.data.get('progress', {})
-            for question_text, question_status in progress_data.items():
-                try:
-                    # Find the question based on the question text
-                    question = Question.objects.get(text=question_status['question_text'])
-                    # Create or update the UserQuestionStatus entry
-                    user_question_status, created = UserQuestionStatus.objects.get_or_create(
-                        user=request.user,
-                        question=question,
-                        is_used=True
-                    )
-                    if not created:
-                        # Update the status if it already exists
-                        user_question_status.is_used = True
-                        user_question_status.is_correct = question.q_answers.all()[question_status['answer']] == question.correct_answer
-                        user_question_status.save()
+            progress_data = request.data.get("progress", {})
+            current_question_text = request.data.get("current_question_text")
+            current_question_is_correct = None
 
-                    # Save the updated exam journey
-                    serializer.save()
+            logger.info(f"Current question text: {current_question_text}")
+            logger.info(f"Progress data: {progress_data}")
+
+            for question_id, question_status in progress_data.items():
+                try:
+                    question = Question.objects.get(
+                        text=question_status["question_text"]
+                    )
+                    user_question_status, created = (
+                        UserQuestionStatus.objects.get_or_create(
+                            user=request.user,
+                            question=question,
+                            defaults={"is_used": True},
+                        )
+                    )
+
+                    user_question_status.is_used = True
+                    user_question_status.is_correct = (
+                        question.q_answers.all()[question_status["answer"]]
+                        == question.correct_answer
+                    )
+                    user_question_status.save()
+
+                    logger.info(
+                        f"Question: {question_status['question_text']}, Is correct: {user_question_status.is_correct}"
+                    )
+
+                    # If this is the current question, store its is_correct value
+                    if question_status["question_text"] == current_question_text:
+                        current_question_is_correct = user_question_status.is_correct
+                        logger.info(
+                            f"Current question is_correct: {current_question_is_correct}"
+                        )
+
                 except Question.DoesNotExist:
-                    return Response({'error': f'Question with text "{question_text}" not found.'},
-                                    status=status.HTTP_400_BAD_REQUEST)
+                    logger.error(
+                        f'Question with text "{question_status["question_text"]}" not found.'
+                    )
+                    return Response(
+                        {
+                            "error": f'Question with text "{question_status["question_text"]}" not found.'
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Error processing question {question_status['question_text']}: {str(e)}"
+                    )
+                    return Response(
+                        {"error": f"Error processing question: {str(e)}"},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+
+            updated_instance = serializer.save()
+
             data = serializer.data
-            data['is_correct'] = user_question_status.is_correct
+            if current_question_is_correct is not None:
+                data["is_correct"] = current_question_is_correct
+            else:
+                logger.warning("current_question_is_correct is None")
+                data["is_correct"] = None
+
+            logger.info(f"Final response data: {data}")
+
             return Response(data, status=status.HTTP_200_OK)
 
+        logger.error(f"Serializer errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -305,21 +413,21 @@ class FavoriteListViewSet(viewsets.ModelViewSet):
         # Filter ExamJourney objects by the logged-in user
         return FavoriteList.objects.filter(user=self.request.user)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def add_question(self, request, pk=None):
         favorite_list = FavoriteList.objects.get(pkid=pk)
-        question_id = get_object_or_404(request.data, 'question_id')
+        question_id = get_object_or_404(request.data, "question_id")
         question = Question.objects.get(pk=question_id)
         favorite_list.questions.add(question)
-        return Response({'status': 'Question added to favorite list successfully'})
+        return Response({"status": "Question added to favorite list successfully"})
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def remove_question(self, request, pk=None):
         favorite_list = FavoriteList.objects.get(pkid=pk)
-        question_id = get_object_or_404(request.data, 'question_id')
+        question_id = get_object_or_404(request.data, "question_id")
         question = Question.objects.get(id=question_id)
         favorite_list.questions.remove(question)
-        return Response({'status': 'Question removed from favorite list successfully'})
+        return Response({"status": "Question removed from favorite list successfully"})
 
 
 class NoteViewSet(viewsets.ModelViewSet):
@@ -338,38 +446,41 @@ class QuestionCountView(APIView):
     def get(self, request, *args, **kwargs):
         filters = Q()
 
-        language = request.GET.get('language')
+        language = request.GET.get("language")
         if language:
             filters &= Q(language__id=language)
 
-        specificity = request.GET.get('specificity')
+        specificity = request.GET.get("specificity")
         if specificity:
             filters &= Q(specificity__id=specificity)
 
-        level = request.GET.get('level')
+        level = request.GET.get("level")
         if level:
             filters &= Q(level__id=level)
 
-        years = request.GET.getlist('years')
+        years = request.GET.getlist("years")
         if years:
             # Ensure all values are integers
             try:
                 years = [year for year in years[0].split(",")]
                 filters &= Q(years__id__in=years)
             except ValueError:
-                return Response({'error': 'Invalid years format'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Invalid years format"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        subjects = request.GET.getlist('subjects')
+        subjects = request.GET.getlist("subjects")
         if subjects:
             subjects = [subject for subject in subjects[0].split(",")]
             filters &= Q(subjects__id__in=subjects)
 
-        systems = request.GET.getlist('systems')
+        systems = request.GET.getlist("systems")
         if systems:
             systems = [system for system in systems[0].split(",")]
             filters &= Q(systems__id__in=systems)
 
-        topics = request.GET.getlist('topics')
+        topics = request.GET.getlist("topics")
         if topics:
             topics = [topic for topic in topics[0].split(",")]
             filters &= Q(topics__id__in=topics)
@@ -378,60 +489,67 @@ class QuestionCountView(APIView):
         user = request.user
 
         # Filter questions by 'is_used' for the specific user
-        is_used = request.GET.get('is_used')
-        if is_used in ['True', 'False']:
-            is_used_filter = Q(userquestionstatus__user=user, userquestionstatus__is_used=is_used == 'True')
+        is_used = request.GET.get("is_used")
+        if is_used in ["True", "False"]:
+            is_used_filter = Q(
+                userquestionstatus__user=user,
+                userquestionstatus__is_used=is_used == "True",
+            )
             filters &= is_used_filter
 
         # Filter questions by 'is_correct' for the specific user
-        is_correct = request.GET.get('is_correct')
-        if is_correct in ['True', 'False']:
-            is_correct_filter = Q(userquestionstatus__user=user, userquestionstatus__is_correct=is_correct == 'True')
+        is_correct = request.GET.get("is_correct")
+        if is_correct in ["True", "False"]:
+            is_correct_filter = Q(
+                userquestionstatus__user=user,
+                userquestionstatus__is_correct=is_correct == "True",
+            )
             filters &= is_correct_filter
         count = Question.objects.filter(filters).distinct().count()
-        return Response({'count': count}, status=status.HTTP_200_OK)
+        return Response({"count": count}, status=status.HTTP_200_OK)
 
 
 class QuestionSearchView(ListView):
     model = Question
-    context_object_name = 'questions'
+    context_object_name = "questions"
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        search_term = self.request.GET.get('q', '')
+        search_term = self.request.GET.get("q", "")
         if search_term:
             queryset = Question.objects.filter(
-                Q(text__icontains=search_term) |
-                Q(q_answers__answer__icontains=search_term)
+                Q(text__icontains=search_term)
+                | Q(q_answers__answer__icontains=search_term)
             ).distinct()
         else:
             queryset = Question.objects.none()
         return queryset
 
     def render_to_response(self, context, **response_kwargs):
-        questions = context['questions']
+        questions = context["questions"]
         results = []
         for question in questions:
-            results.append({
-                'id': question.id,
-                'text': question.text,
-                'hint': question.hint,
-                'video_hint': question.video_hint,
-                'is_used': question.is_used,
-                'is_correct': question.is_correct,
-                'answers': list(question.q_answers.values('id', 'answer')),
-                'correct_answer': str(question.correct_answer),
-                'language': question.language.name,
-                'specificity': question.specificity.name,
-                'level': question.level.name,
-                'years': [year.year for year in question.years.all()],
-                'subjects': [subject.name for subject in question.subjects.all()],
-                'systems': [system.name for system in question.systems.all()],
-                'topics': [topic.name for topic in question.topics.all()],
-
-            })
-        return JsonResponse({'results': results})
+            results.append(
+                {
+                    "id": question.id,
+                    "text": question.text,
+                    "hint": question.hint,
+                    "video_hint": question.video_hint,
+                    "is_used": question.is_used,
+                    "is_correct": question.is_correct,
+                    "answers": list(question.q_answers.values("id", "answer")),
+                    "correct_answer": str(question.correct_answer),
+                    "language": question.language.name,
+                    "specificity": question.specificity.name,
+                    "level": question.level.name,
+                    "years": [year.year for year in question.years.all()],
+                    "subjects": [subject.name for subject in question.subjects.all()],
+                    "systems": [system.name for system in question.systems.all()],
+                    "topics": [topic.name for topic in question.topics.all()],
+                }
+            )
+        return JsonResponse({"results": results})
 
 
 class ReportView(CreateAPIView):
