@@ -2,6 +2,7 @@ version: "3.9"
 
 services:
 
+
   es:
     image: elasticsearch:7.17.16
     environment:
