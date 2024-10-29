@@ -1,0 +1,21 @@
+APP_NAME=Kroks
+DJANGO_SETTINGS_MODULE=main.settings.production
+DJANGO_SECRET_KEY=2Sf5mwBxD8fLEEBdpY3_ldt5L_J7-1_sl688XvEhZcF8VzuK-7A
+DJANGO_ADMIN_URL=y6ph_Wr=s4IB/
+DJANGO_ALLOWED_HOSTS=.letaskono-zwaj.com
+
+CELERY_BROKER = redis://redis:6379/0
+DJANGO_SECURE_SSL_REDIRECT=False
+CELERY_FLOWER_USER=admin
+CELERY_FLOWER_PASSWORD=Pass123456
+
+EMAIL_BACKEND = django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST = smtp.gmail.com
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = letaskono.app2@gmail.com
+EMAIL_HOST_PASSWORD = hlasxfgsjfaftjww
+DJANGO_DEFAULT_FROM_EMAIL = letaskono.app2@gmail.com
+DOMAIN=www.letaskono-zwaj.com
+SIGNING_KEY=2Sf5mwBxD8fLEEBdpY3_ldt5L_J7-1_sl688XvEhZcF8VzuK-7A
