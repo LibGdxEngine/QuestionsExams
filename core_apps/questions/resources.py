@@ -1,6 +1,16 @@
 from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from import_export import fields, resources
-from .models import Question, Language, Specificity, Level, QuestionAnswer, Year, Subject, System, Topic
+from .models import (
+    Question,
+    Language,
+    Specificity,
+    Level,
+    QuestionAnswer,
+    Year,
+    Subject,
+    System,
+    Topic,
+)
 from django.db.utils import IntegrityError
 from django.db import transaction
 
@@ -15,16 +25,17 @@ class NewAnswersManyToManyWidget(ManyToManyWidget):
             return []
 
         # Split the value by commas to get the individual answer texts
-        item_names = [item.strip() for item in value.split(',')]
+        item_names = [item.strip() for item in value.split(",")]
         items = []
         with transaction.atomic():
             for item_name in item_names:
                 # Retrieve or create the QuestionAnswer based on the answer text
                 obj, created = self.model.objects.get_or_create(**{"answer": item_name})
-                items.append(obj)  # Collect the primary keys of the QuestionAnswer objects
+                items.append(
+                    obj
+                )  # Collect the primary keys of the QuestionAnswer objects
         return items  # Return the list of primary keys (which Django expects)
 
-    
     def render(self, value, obj=None):
         """
         During export, this method will format the answers as a comma-separated
@@ -37,22 +48,26 @@ class NewAnswersManyToManyWidget(ManyToManyWidget):
 
 
 class AnswersManyToManyWidget(ManyToManyWidget):
-    
+
     def clean(self, value, row=None, *args, **kwargs):
         if not value:
             return []
-        item_names = [item.strip() for item in value.split(',')]
+        item_names = [item.strip() for item in value.split(",")]
         items = []
         with transaction.atomic():
             for item_name in item_names:
-                obj, created = self.model.objects.get_or_create(**{self.field: item_name})
+                obj, created = self.model.objects.get_or_create(
+                    **{self.field: item_name}
+                )
                 if not created:
                     original_name = item_name
                     counter = 1
                     while not created:
                         try:
                             modified_name = f"{original_name}_{counter}"
-                            obj, created = self.model.objects.get_or_create(**{self.field: modified_name})
+                            obj, created = self.model.objects.get_or_create(
+                                **{self.field: modified_name}
+                            )
                             counter += 1
                         except IntegrityError:
                             counter += 1
@@ -62,7 +77,7 @@ class AnswersManyToManyWidget(ManyToManyWidget):
     def get_queryset(self, value, row=None, *args, **kwargs):
         if not value:
             return self.model.objects.none()
-        item_names = [item.strip() for item in value.split(',')]
+        item_names = [item.strip() for item in value.split(",")]
         items = []
         for item_name in item_names:
             obj, created = self.model.objects.get_or_create(**{self.field: item_name})
@@ -72,18 +87,22 @@ class AnswersManyToManyWidget(ManyToManyWidget):
     def import_field(self, field, data, instance, *args, **kwargs):
         value = self.clean(data.get(self.column_name, None), row=data)
         if value:
-            item_names = [item.strip() for item in value.split(',')]
+            item_names = [item.strip() for item in value.split(",")]
             items = []
             with transaction.atomic():
                 for item_name in item_names:
-                    obj, created = self.model.objects.get_or_create(**{self.field: item_name})
+                    obj, created = self.model.objects.get_or_create(
+                        **{self.field: item_name}
+                    )
                     if not created:
                         original_name = item_name
                         counter = 1
                         while not created:
                             try:
                                 modified_name = f"{original_name}_{counter}"
-                                obj, created = self.model.objects.get_or_create(**{self.field: modified_name})
+                                obj, created = self.model.objects.get_or_create(
+                                    **{self.field: modified_name}
+                                )
                                 counter += 1
                             except IntegrityError:
                                 counter += 1
@@ -96,18 +115,22 @@ class CustomManyToManyWidget(ManyToManyWidget):
     def import_field(self, field, data, instance, *args, **kwargs):
         value = self.clean(data.get(self.column_name, None), row=data)
         if value:
-            item_names = [item.strip() for item in value.split(',')]
+            item_names = [item.strip() for item in value.split(",")]
             items = []
             with transaction.atomic():
                 for item_name in item_names:
-                    obj, created = self.model.objects.get_or_create(**{self.field: item_name})
+                    obj, created = self.model.objects.get_or_create(
+                        **{self.field: item_name}
+                    )
                     if not created:
                         original_name = item_name
                         counter = 1
                         while not created:
                             try:
                                 modified_name = f"{original_name}_{counter}"
-                                obj, created = self.model.objects.get_or_create(**{self.field: modified_name})
+                                obj, created = self.model.objects.get_or_create(
+                                    **{self.field: modified_name}
+                                )
                                 counter += 1
                             except IntegrityError:
                                 counter += 1
@@ -121,7 +144,9 @@ class SingleValueForeignKeyWidget(ForeignKeyWidget):
         if not value:
             return None
         try:
-            return self.get_queryset(value, row, *args, **kwargs).get(**{self.field: value})
+            return self.get_queryset(value, row, *args, **kwargs).get(
+                **{self.field: value}
+            )
         except self.model.DoesNotExist:
             obj, created = self.model.objects.get_or_create(**{self.field: value})
             return obj
@@ -137,7 +162,9 @@ class SingleValueForeignKeyWidget(ForeignKeyWidget):
                 while not created:
                     try:
                         modified_value = f"{original_value}_{counter}"
-                        obj, created = self.model.objects.get_or_create(**{self.field: modified_value})
+                        obj, created = self.model.objects.get_or_create(
+                            **{self.field: modified_value}
+                        )
                         counter += 1
                     except IntegrityError:
                         counter += 1
@@ -147,63 +174,72 @@ class SingleValueForeignKeyWidget(ForeignKeyWidget):
 
 class QuestionResource(resources.ModelResource):
     language = fields.Field(
-        column_name='language',
-        attribute='language',
-        widget=SingleValueForeignKeyWidget(Language, 'name'))
+        column_name="language",
+        attribute="language",
+        widget=SingleValueForeignKeyWidget(Language, "name"),
+    )
     specificity = fields.Field(
-        column_name='specificity',
-        attribute='specificity',
-        widget=SingleValueForeignKeyWidget(Specificity, 'name'))
+        column_name="specificity",
+        attribute="specificity",
+        widget=SingleValueForeignKeyWidget(Specificity, "name"),
+    )
     level = fields.Field(
-        column_name='level',
-        attribute='level',
-        widget=SingleValueForeignKeyWidget(Level, 'name'))
+        column_name="level",
+        attribute="level",
+        widget=SingleValueForeignKeyWidget(Level, "name"),
+    )
     years = fields.Field(
-        column_name='years',
-        attribute='years',
-        widget=AnswersManyToManyWidget(Year, field='year'))
+        column_name="years",
+        attribute="years",
+        widget=AnswersManyToManyWidget(Year, field="year"),
+    )
     subjects = fields.Field(
-        column_name='subjects',
-        attribute='subjects',
-        widget=AnswersManyToManyWidget(Subject, field='name'))
+        column_name="subjects",
+        attribute="subjects",
+        widget=AnswersManyToManyWidget(Subject, field="name"),
+    )
     systems = fields.Field(
-        column_name='systems',
-        attribute='systems',
-        widget=CustomManyToManyWidget(System, field='name'))
+        column_name="systems",
+        attribute="systems",
+        widget=CustomManyToManyWidget(System, field="name"),
+    )
     topics = fields.Field(
-        column_name='topics',
-        attribute='topics',
-        widget=CustomManyToManyWidget(Topic, field='name'))
+        column_name="topics",
+        attribute="topics",
+        widget=CustomManyToManyWidget(Topic, field="name"),
+    )
     # answers = fields.Field(
     #     column_name='answers',
     #     attribute='answers',
     #     widget=AnswersManyToManyWidget(QuestionAnswer, field='answer'))
     answers = fields.Field(
-        column_name='answers',
-        attribute='q_answers',
-        widget=NewAnswersManyToManyWidget(QuestionAnswer, 'answer'))
+        column_name="answers",
+        attribute="q_answers",
+        widget=NewAnswersManyToManyWidget(QuestionAnswer, "answer"),
+    )
     correct_answer = fields.Field(
-        column_name='correct_answer',
-        attribute='correct_answer',
-        widget=SingleValueForeignKeyWidget(QuestionAnswer, 'answer'))
+        column_name="correct_answer",
+        attribute="correct_answer",
+        widget=SingleValueForeignKeyWidget(QuestionAnswer, "answer"),
+    )
 
     class Meta:
         model = Question
-        exclude = ('is_used', 'is_correct')
+        exclude = ("is_used", "is_correct")
 
     def dehydrate_correct_answer(self, question):
         """
         During export, find the index of the correct_answer in the answers list.
         """
         if not question.pk:  # Check if the Question has been saved
-            return ''  # Return an empty string if the Question hasn't been saved yet
+            return ""  # Return an empty string if the Question hasn't been saved yet
 
         answers_list = list(question.q_answers.all())
         try:
             correct_answer_index = answers_list.index(question.correct_answer)
             return correct_answer_index
         except ValueError:
-            return ''  # Return an empty string if no correct answer is found
+            return ""  # Return an empty string if no correct answer is found
 
     # def before_import_row(self, row, **kwargs):
     #     """
@@ -238,25 +274,33 @@ class QuestionResource(resources.ModelResource):
         After importing the row, handle the related fields like 'answers' and 'correct_answer'
         now that the 'Question' instance has been saved and has a primary key.
         """
-        question_text = row.get('text')
+        question_text = row.get("text")
         # Fetch the newly created or updated Question
         question = Question.objects.get(text=question_text)
 
         # Handle Many-to-One relation for answers after saving the Question
-        answers_data = row.get('answers', '')
-        answers_list = [answer.strip() for answer in answers_data.split(',')] if answers_data else []
+        answers_data = row.get("answers", "")
+        answers_list = (
+            [answer.strip() for answer in answers_data.split(",")]
+            if answers_data
+            else []
+        )
 
         # Create or retrieve answers for the question
         answer_objects = []
         for answer_text in answers_list:
-            answer, created = QuestionAnswer.objects.get_or_create(question=question, answer=answer_text)
+            answer, created = QuestionAnswer.objects.get_or_create(
+                question=question, answer=answer_text
+            )
             answer_objects.append(answer)
 
         # Now set the correct answer by its index (if provided)
-        correct_answer_index = row.get('correct_answer')
-        if correct_answer_index is not None and correct_answer_index != '':
+        correct_answer_index = row.get("correct_answer")
+        if correct_answer_index is not None and correct_answer_index != "":
             try:
-                correct_answer = answer_objects[int(correct_answer_index)]  # Get the correct answer from the list
+                correct_answer = answer_objects[
+                    int(correct_answer_index)
+                ]  # Get the correct answer from the list
                 question.correct_answer = correct_answer
                 question.save()  # Save the question again with the correct answer
             except (IndexError, ValueError):
