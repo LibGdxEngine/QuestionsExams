@@ -1,7 +1,6 @@
 version: "3.9"
 
 services:
-
   es:
     image: elasticsearch:7.17.16
     environment:
@@ -9,75 +8,67 @@ services:
     ports:
       - "9200:9200"
     networks:
-      - reverseproxy_nw
+      - app_network
     deploy:
       resources:
         limits:
           cpus: '1.0'
           memory: 1g
-  api: &api
-    build:
-      context: .
-      dockerfile: ./docker/production/django/Dockerfile
-    volumes:
-      - static_volume:/app/staticfiles
-      - media_volume:/app/mediafiles
-    env_file:
-      - ./.envs/.production/.django
-      - ./.envs/.production/.postgres
-    depends_on:
-      - postgres
-      - redis
-      - es
-    command: /start
-    image: letaskono_api
-    networks:
-      - reverseproxy_nw
-
-  postgres:
-    build:
-      context: .
-      dockerfile: ./docker/production/postgres/Dockerfile
-    image: letaskono_api_database
-    volumes:
-      - production_postgres_data:/var/lib/postgresql/data
-      - production_postgres_data_backups:/backups
-    env_file:
-      - ./.envs/.production/.postgres
-    networks:
-      - reverseproxy_nw
 
   redis:
     image: redis:7-alpine
+    ports:
+      - "6379:6379"
     networks:
-      - reverseproxy_nw
+      - app_network
 
   celery_worker:
-    <<: *api
-    image: letaskono_api_celery_worker
     build:
       context: .
       dockerfile: ./docker/production/django/Dockerfile
+    env_file:
+      - ./.envs/.production/.django
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/mediafiles
+      - ./docker/production/django/celery/worker/start:/start-celeryworker
     command: /start-celeryworker
     networks:
-      - reverseproxy_nw
+      - app_network
 
   flower:
-    <<: *api
-    image: letaskono_api_flower
+    build:
+      context: .
+      dockerfile: ./docker/production/django/Dockerfile
+    env_file:
+      - ./.envs/.production/.django
+    volumes:
+      - ./docker/production/django/celery/flower/start:/start-flower
     command: /start-flower
     ports:
       - "5555:5555"
     networks:
-      - reverseproxy_nw
+      - app_network
+
+  django:
+    build:
+      context: .
+      dockerfile: ./docker/production/django/Dockerfile
+    env_file:
+      - ./.envs/.production/.django
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/mediafiles
+    ports:
+      - "8002:8000"
+    networks:
+      - app_network
+    command: gunicorn main.wsgi:application --bind 0.0.0.0:8000
 
 networks:
-    reverseproxy_nw:
-        external: true
+  app_network:
+    driver: bridge
 
 volumes:
-  static_volume: { }
-  media_volume: { }
-  production_postgres_data: { }
-  production_postgres_data_backups: { }
-  flower_data: { }
+  static_volume:
+  media_volume:

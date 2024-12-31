@@ -93,12 +93,19 @@ class Topic(models.Model):
 
 
 class QuestionAnswer(models.Model):
-    question = models.ForeignKey('Question',null=True, blank=True,
-                                  on_delete=models.CASCADE, related_name='q_answers')
-    answer = models.CharField(max_length=300)
+    question = models.ForeignKey('Question', null=True, blank=True, on_delete=models.CASCADE, related_name='q_answers')
+    answer_text = models.CharField(max_length=300, blank=True, default="")  # Optional text part of the answer
 
     def __str__(self):
-        return self.answer
+        return self.answer_text or "Answer with Images"
+
+
+class AnswerImage(models.Model):
+    question_answer = models.ForeignKey(QuestionAnswer, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='answer_images/')
+
+    def __str__(self):
+        return f"Image for {self.question_answer}"
 
 
 class Question(models.Model):

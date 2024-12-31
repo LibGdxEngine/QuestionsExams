@@ -12,7 +12,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 APP_DIR = ROOT_DIR / "core_apps"
 
 DEBUG = env.bool("DJANGO_DEBUG", False)
-
+environ.Env.read_env(ROOT_DIR / ".env")
 # JAZZMIN_UI_TWEAKS = {
 #     "theme": "flatly",
 #     "dark_mode_theme": "darkly",

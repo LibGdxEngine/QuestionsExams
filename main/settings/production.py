@@ -1,7 +1,7 @@
 from .base import *  # noqa
 from .base import env
 
-DEBUG = False
+DEBUG = True
 
 ADMINS = [("Ahmed Fathy", "letaskono.app@gmail.com")]
 
@@ -13,11 +13,11 @@ CSRF_TRUSTED_ORIGINS = ["http://app.krokplus.com", "https://app.krokplus.com", "
                         "http://krokplus.com",
                         "http://admin.krokplus.com", "htts://www.krokplus.com",
                         "https://www.krokplus.com", "http://localhost:8000",
-                        "http://93.127.203.112"]
+                        "http://93.127.203.112",'http://localhost', "http://localhost:3000"]
 
-SECRET_KEY = env("DJANGO_SECRET_KEY", default='newsecretkey')
-
-ALLOWED_HOSTS = ['app.krokplus.com', '93.127.203.112', 'www.krokplus.com', 'www.app.krokplus.com']
+SECRET_KEY = env("DJANGO_SECRET_KEY", default="your-secret-key-her22e")
+print(f'{SECRET_KEY} key')
+ALLOWED_HOSTS = ['app.krokplus.com', '93.127.203.112', 'www.krokplus.com', 'www.app.krokplus.com','localhost']
 
 CORS_ALLOW_ALL_ORIGINS = True
 
@@ -25,9 +25,9 @@ ADMIN_URL = env("DJANGO_ADMIN_URL", default='')
 
 DATABASES = {"default": env.db("DATABASE_URL", default='sqlite:///db')}
 
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
+# SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
 
 SESSION_COOKIE_SECURE = False
 
@@ -36,11 +36,11 @@ CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = None
 
 # TODO: change to 518400 seconds later
-SECURE_HSTS_SECONDS = 60
+# SECURE_HSTS_SECONDS = 60
 
-SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAIN", default=True)
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAIN", default=True)
 
-SECURE_CONTENT_TYPE_NOSNIFF = env.bool("DJANGO_SECURE_CONTENT_TYPE_NOSNIFF", default=True)
+# SECURE_CONTENT_TYPE_NOSNIFF = env.bool("DJANGO_SECURE_CONTENT_TYPE_NOSNIFF", default=True)
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 

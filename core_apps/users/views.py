@@ -20,6 +20,8 @@ from django.contrib.auth import get_user_model, login
 from core_apps.questions.models import Question
 from core_apps.users.serializers import UserSerializer, AuthTokenSerializer
 from main.settings.local import DEFAULT_FROM_EMAIL
+from django.shortcuts import redirect
+from urllib.parse import urlencode
 
 User = get_user_model()
 
@@ -53,6 +55,23 @@ class CreateUserView(generics.CreateAPIView):
                         status=status.HTTP_201_CREATED)
 
 
+# class ActivateUser(APIView):
+#     """View to activate the user once they click the activation link"""
+
+#     def get(self, request, uidb64, token):
+#         try:
+#             uid = force_str(urlsafe_base64_decode(uidb64))
+#             user = User.objects.get(pk=uid)
+#         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+#             user = None
+
+#         if user is not None and default_token_generator.check_token(user, token):
+#             user.is_active = True
+#             user.save()
+#             return Response({"message": "Account activated successfully. You can now log in."},
+#                             status=status.HTTP_200_OK)
+#         return Response({"error": "Invalid activation link"}, status=status.HTTP_400_BAD_REQUEST)
+
 class ActivateUser(APIView):
     """View to activate the user once they click the activation link"""
 
@@ -63,12 +82,24 @@ class ActivateUser(APIView):
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             user = None
 
+        base_url = "https://krokplus.com/"
+
         if user is not None and default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
-            return Response({"message": "Account activated successfully. You can now log in."},
-                            status=status.HTTP_200_OK)
-        return Response({"error": "Invalid activation link"}, status=status.HTTP_400_BAD_REQUEST)
+            # Successful activation
+            params = {
+                "message": "Account activated successfully. You can now log in.",
+                "activated": "true",
+            }
+            redirect_url = f"{base_url}?{urlencode(params)}"
+            return redirect(redirect_url)
+
+        # Failed activation
+        params = {"error": "Invalid activation link", "activated": "false"}
+        redirect_url = f"{base_url}?{urlencode(params)}"
+        return redirect(redirect_url)
+
     
 class CreateAuthTokenView(ObtainAuthToken):
     """Create a new auth token for user"""

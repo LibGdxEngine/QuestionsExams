@@ -1,74 +1,34 @@
-ARG PYTHON_VERSION=3.11.2-bullseye
+# Use an official Python image
+FROM python:3.11-slim
 
-FROM python:${PYTHON_VERSION} as python
-
-
-FROM python as python-build-stage
-ARG BUILD_ENVIRONMENT=production
-
-# Add Debian Bullseye repositories
-RUN echo "deb http://deb.debian.org/debian bullseye main" > /etc/apt/sources.list \
-    && echo "deb-src http://deb.debian.org/debian bullseye main" >> /etc/apt/sources.list
-
-
-RUN apt-get update && apt-get install --no-install-recommends -y
-
-COPY ./requirements .
-
-RUN pip wheel --wheel-dir /usr/src/app/wheels \
-    -r ${BUILD_ENVIRONMENT}.txt
-
-FROM python as python-run-stage
-ARG BUILD_ENVIRONMENT=production
-
-ARG APP_HOME=/app
-
+# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
-
 ENV PYTHONUNBUFFERED 1
 
-ENV BUILD_ENV ${BUILD_ENVIRONMENT}
+# Set the working directory inside the container
+WORKDIR /app
 
-WORKDIR ${APP_HOME}
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN addgroup --system django && \
-  adduser --system --ingroup django django && \
-  mkdir -p ${APP_HOME}/staticfiles && \
-  chown django:django ${APP_HOME}/staticfiles && \
-  chmod 775 ${APP_HOME}/staticfiles
+# Install Python dependencies
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-RUN apt-get update && apt-get install --no-install-recommends -y \
-  libpq-dev \
-  && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
-  && rm -rf /var/lib/apt/lists/*
+# Copy the application code into the container
+COPY . /app/
 
-COPY --from=python-build-stage /usr/src/app/wheels /wheels/
+# Set up entrypoint script
+COPY ./docker/production/django/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
-RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
-    && rm -rf /wheels/
+# Expose the port your Django app runs on
+EXPOSE 8002
 
-
-COPY --chown=django:django ./docker/production/django/entrypoint /entrypoint
-RUN sed -i 's/\r$//g' /entrypoint
-RUN chmod +x /entrypoint
-
-COPY --chown=django:django ./docker/production/django/start /start
-RUN sed -i 's/\r$//g' /start
-RUN chmod +x /start
-
-COPY --chown=django:django ./docker/production/django/celery/worker/start /start-celeryworker
-RUN sed -i 's/\r$//g' /start-celeryworker
-RUN chmod +x /start-celeryworker
-
-COPY ./docker/production/django/celery/flower/start /start-flower
-RUN sed -i 's/\r$//g' /start-flower
-RUN chmod +x /start-flower
-
-
-COPY --chown=django:django . ${APP_HOME}
-
-RUN chown django:django ${APP_HOME}
-
-COPY . ${APP_HOME}
-
-ENTRYPOINT ["/entrypoint"]
+# Run the entrypoint script
+ENTRYPOINT ["/app/entrypoint.sh"]

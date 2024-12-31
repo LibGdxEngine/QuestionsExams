@@ -1,9 +1,19 @@
-from django import forms
 from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
-from .models import Language, Specificity, Level, Year, Subject, System, Topic, Question, ExamJourney, QuestionAnswer, \
-    Report, University, UserQuestionStatus
+from .models import (
+    Language, Specificity, Level, Year, Subject, System, Topic, Question, 
+    ExamJourney, QuestionAnswer, Report, University, UserQuestionStatus, AnswerImage
+)
 from .resources import QuestionResource
+
+
+# Inline Model for AnswerImage
+class AnswerImageInline(admin.TabularInline):
+    model = AnswerImage
+    extra = 1  # Number of empty image fields to show by default
+    min_num = 0  # Optional, no minimum images required
+    can_delete = True  # Allow deletion of images
+
 
 # Inline Model for QuestionAnswer
 class QuestionAnswerInline(admin.TabularInline):
@@ -21,14 +31,12 @@ class QuestionAdmin(ImportExportModelAdmin):
     list_filter = ['language', 'specificity', 'level', 'years', 'subjects', 'systems', 'topics']
     filter_horizontal = ['years', 'subjects', 'systems', 'topics']
     exclude = ['is_used', 'is_correct']
-    # Add the QuestionAnswerInline to the QuestionAdmin
-    inlines = [QuestionAnswerInline]
+    inlines = [QuestionAnswerInline]   # Include both inlines
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "correct_answer":
-            # Only show the QuestionAnswer options that are related to this question
             if request.resolver_match.kwargs.get('object_id'):
                 question_id = request.resolver_match.kwargs.get('object_id')
-                print(question_id)
                 kwargs["queryset"] = QuestionAnswer.objects.filter(question__id=question_id)
             else:
                 kwargs["queryset"] = QuestionAnswer.objects.none()  # No options if there's no question instance
@@ -40,7 +48,6 @@ class QuestionAdmin(ImportExportModelAdmin):
         after the answers have been created.
         """
         super().save_related(request, form, formsets, change)
-        # Now that answers are saved, we can update the correct_answer queryset
         if form.instance.pk:
             form.instance.correct_answer = form.cleaned_data.get('correct_answer')
             form.instance.save()
@@ -58,3 +65,4 @@ admin.site.register(QuestionAnswer)
 admin.site.register(ExamJourney)
 admin.site.register(Report)
 admin.site.register(UserQuestionStatus)
+admin.site.register(AnswerImage)
