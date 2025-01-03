@@ -25,6 +25,8 @@ from .views import (
     preview_questions,
     confirm_question,
     upload_summary,
+    update_temp_question,
+    get_temp_question,
 )
 
 app_name = "questions"
@@ -68,5 +70,15 @@ urlpatterns = [
     ),
     path(
         "confirm-question/<int:question_id>/", confirm_question, name="confirm_question"
+    ),
+    path(
+        "update-temp-question/<int:question_id>/",
+        update_temp_question,
+        name="update_temp_question",
+    ),
+    path(
+        "get-temp-question/<int:question_id>/",
+        get_temp_question,
+        name="get_temp_question",
     ),
 ]

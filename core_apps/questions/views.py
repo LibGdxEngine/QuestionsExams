@@ -28,6 +28,7 @@ import pandas as pd
 from django.db.models import Count
 from collections import Counter
 from django.urls import reverse
+from django.core.paginator import Paginator
 
 
 class LanguageViewSet(viewsets.ModelViewSet):
@@ -793,10 +794,28 @@ def preview_questions(request, upload_id):
     elif has_correct == "no":
         questions = questions.exclude(temp_answers__is_correct=True)
 
-    # Get unique values for filters
+    # Pagination
+    page_size = request.GET.get("page_size", 50)  # Default to 50 items per page
+    try:
+        page_size = int(page_size)
+    except ValueError:
+        page_size = 50
+
+    page_number = request.GET.get("page", 1)
+    try:
+        page_number = int(page_number)
+    except ValueError:
+        page_number = 1
+
+    paginator = Paginator(questions, page_size)
+    page_obj = paginator.get_page(page_number)
+
+    # Calculate page range with ellipsis
+    page_range = get_page_range(paginator, page_obj.number)
+
     context = {
         "excel_upload": excel_upload,
-        "questions": questions.prefetch_related("temp_answers"),
+        "questions": page_obj,
         "languages": excel_upload.temp_questions.values_list(
             "language", flat=True
         ).distinct(),
@@ -811,9 +830,42 @@ def preview_questions(request, upload_id):
         "selected_level": level,
         "has_answers": has_answers,
         "has_correct": has_correct,
+        "page_obj": page_obj,
+        "page_range": page_range,
+        "page_size": page_size,
+        "page_size_options": [10, 25, 50, 100, 200],
+        "total_questions": questions.count(),
     }
 
     return render(request, "preview_questions.html", context)
+
+
+def get_page_range(paginator, current_page, show_adjacent=2):
+    """Helper function to calculate page range with ellipsis"""
+    total_pages = paginator.num_pages
+
+    # Always show first and last page
+    page_range = []
+
+    # Add first page
+    page_range.append(1)
+
+    # Add pages around current page
+    for page_num in range(
+        max(2, current_page - show_adjacent),
+        min(total_pages, current_page + show_adjacent + 1),
+    ):
+        if page_range[-1] != page_num - 1:
+            page_range.append("...")
+        page_range.append(page_num)
+
+    # Add last page
+    if total_pages > 1 and page_range[-1] != total_pages:
+        if page_range[-1] != total_pages - 1:
+            page_range.append("...")
+        page_range.append(total_pages)
+
+    return page_range
 
 
 def confirm_question(request, question_id):
@@ -855,3 +907,78 @@ def confirm_question(request, question_id):
         )
 
     return JsonResponse({"success": False, "message": "Invalid request method."})
+
+
+@csrf_exempt
+def update_temp_question(request, question_id):
+    if request.method == "POST":
+        try:
+            question = TempQuestion.objects.get(id=question_id)
+
+            # Update question fields
+            question.text = request.POST.get("text", question.text)
+            question.language = request.POST.get("language", question.language)
+            question.specificity = request.POST.get("specificity", question.specificity)
+            question.level = request.POST.get("level", question.level)
+            question.years = request.POST.get("years", question.years)
+            question.hint = request.POST.get("hint", question.hint)
+            question.video_hint = request.POST.get("video_hint", question.video_hint)
+            question.save()
+
+            # Update existing answers
+            correct_answer = request.POST.get("correct_answer")
+
+            # Handle existing answers
+            for answer in question.temp_answers.all():
+                answer_text = request.POST.get(f"answer_{answer.id}")
+                if answer_text:
+                    answer.text = answer_text
+                    answer.is_correct = str(answer.id) == correct_answer
+                    answer.save()
+
+            # Handle new answers
+            for key in request.POST.keys():
+                if key.startswith("new_answer_"):
+                    new_answer_text = request.POST.get(key)
+                    if new_answer_text.strip():  # Only create if there's actual text
+                        new_answer = TempAnswer.objects.create(
+                            question=question,
+                            text=new_answer_text,
+                            is_correct=(
+                                correct_answer == key.replace("new_answer_", "new_")
+                            ),
+                        )
+
+            return JsonResponse({"success": True})
+        except Exception as e:
+            return JsonResponse({"success": False, "message": str(e)})
+
+    return JsonResponse({"success": False, "message": "Invalid request method"})
+
+
+@csrf_exempt
+def get_temp_question(request, question_id):
+    try:
+        question = TempQuestion.objects.get(id=question_id)
+        answers = question.temp_answers.all()
+
+        question_data = {
+            "text": question.text,
+            "language": question.language,
+            "specificity": question.specificity,
+            "level": question.level,
+            "years": question.years,
+            "hint": question.hint,
+            "video_hint": question.video_hint,
+        }
+
+        answers_data = [
+            {"id": answer.id, "text": answer.text, "is_correct": answer.is_correct}
+            for answer in answers
+        ]
+
+        return JsonResponse(
+            {"success": True, "question": question_data, "answers": answers_data}
+        )
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)})
