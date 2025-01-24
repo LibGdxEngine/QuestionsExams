@@ -11,7 +11,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 
 APP_DIR = ROOT_DIR / "core_apps"
 
-DEBUG = True
+DEBUG = False
 environ.Env.read_env(ROOT_DIR / ".env")
 # JAZZMIN_UI_TWEAKS = {
 #     "theme": "flatly",
@@ -29,6 +29,7 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
+    
 ]
 
 THIRD_PARTY_APPS = [
@@ -58,16 +59,18 @@ LOCAL_APPS = [
     "core_apps.responses",
     "core_apps.search",
     "core_apps.questions",
+    'allauth',
+    'allauth.account',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 AUTHENTICATION_BACKENDS = (
     "allauth.account.auth_backends.AuthenticationBackend",
+    "django.contrib.auth.backends.ModelBackend",
     "social_core.backends.google.GoogleOAuth2",
     "social_core.backends.facebook.FacebookOAuth2",
     "social_core.backends.apple.AppleIdAuth",
-    "django.contrib.auth.backends.ModelBackend",
 )
 
 SOCIALACCOUNT_PROVIDERS = {
@@ -111,16 +114,19 @@ DDOS_TIME_WINDOW = 60  # Time window in seconds
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "core_apps.users.middleware.CorsMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
+    "core_apps.users.middleware.CorsMiddleware",
+    # "main.middleware.LogResponseMiddleware",
     "core_apps.users.middleware.DDosMiddleware",
     # TODO: comment out this line in production
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "social_django.middleware.SocialAuthExceptionMiddleware",
+
 ]
 
 ROOT_URLCONF = "main.urls"
@@ -145,6 +151,7 @@ TEMPLATES = [
 
 # URL to redirect to after social login
 LOGIN_REDIRECT_URL = "/"
+ACCOUNT_ADAPTER = "core_apps.users.adapters.CustomAccountAdapter"
 
 WSGI_APPLICATION = "main.wsgi.application"
 
@@ -188,6 +195,7 @@ USE_TZ = True
 SITE_ID = 1
 
 ADMIN_URL = "supersecret/"
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
@@ -242,21 +250,83 @@ ELASTICSEARCH_DSL = {
     "default": {"hosts": "es:9200"},
 }
 
+# LOGGING = {
+#     "version": 1,
+#     "disable_existing_loggers": False,
+#     "formatters": {
+#         "verbose": {
+#             "format": "%(levelname)s %(name)-12s %(asctime)s %(module)s "
+#             "%(process)d %(thread)d %(message)s"
+#         }
+#     },
+#     "handlers": {
+#         "console": {
+#             "level": "DEBUG",
+#             "class": "logging.StreamHandler",
+#             "formatter": "verbose",
+#         }
+#     },
+#      "loggers": {
+#         "django": {
+#             "handlers": ["console"],
+#             "level": "INFO",
+#             "propagate": True,
+#         },
+#         "main.middleware": {  # Match the logger name used in the middleware
+#             "handlers": ["console"],
+#             "level": "INFO",
+#             "propagate": False,
+#         },
+#     },
+#     "root": {"level": "INFO", "handlers": ["console"]},
+# }
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "verbose": {
-            "format": "%(levelname)s %(name)-12s %(asctime)s %(module)s "
-            "%(process)d %(thread)d %(message)s"
-        }
+        "detailed": {
+            "format": (
+                "%(asctime)s [%(levelname)s] %(name)s | "
+                "Message: %(message)s"
+            )
+        },
     },
     "handlers": {
         "console": {
-            "level": "DEBUG",
+            "level": "INFO",
             "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        }
+            "formatter": "detailed",  # Use the detailed formatter
+        },
     },
-    "root": {"level": "INFO", "handlers": ["console"]},
+    "loggers": {
+        "main.middleware": {  # Match this name with the middleware logger
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}
+
+
+# Social Auth settings
+SOCIAL_AUTH_JSONFIELD_ENABLED = True
+SOCIAL_AUTH_URL_NAMESPACE = "social"
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/"
+SOCIAL_AUTH_LOGIN_ERROR_URL = "/login-error/"
+
+# Additional settings for Google OAuth2
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+]
+
+# Additional settings for Facebook
+SOCIAL_AUTH_FACEBOOK_SCOPE = ["email"]
+SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {"fields": "id,name,email"}
+
+# JWT settings if you're using JWT tokens
+SIMPLE_JWT = {
+    "AUTH_HEADER_TYPES": ("JWT",),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }

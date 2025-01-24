@@ -9,6 +9,7 @@ SECRET_KEY = env(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 SECURE_SSL_REDIRECT = False
+ACCOUNT_ADAPTER = "core_apps.users.adapters.CustomAccountAdapter"
 
 SESSION_COOKIE_SECURE = False
 CORS_ALLOWED_ORIGINS = [

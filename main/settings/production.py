@@ -43,7 +43,7 @@ DATABASES = {"default": env.db("DATABASE_URL", default="sqlite:///db")}
 # SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
-
+ACCOUNT_ADAPTER = "core_apps.users.adapters.CustomAccountAdapter"
 SESSION_COOKIE_SECURE = False
 
 CSRF_COOKIE_SECURE = False

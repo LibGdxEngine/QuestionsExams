@@ -29,6 +29,10 @@ from django.db.models import Count
 from collections import Counter
 from django.urls import reverse
 from django.core.paginator import Paginator
+from .tasks import process_excel_file, save_questions_task
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class LanguageViewSet(viewsets.ModelViewSet):
@@ -324,7 +328,6 @@ class CreateExamJourneyAPIView(APIView):
 
 logger = logging.getLogger("core_apps.questions")
 
-
 class UpdateExamJourneyAPIView(APIView):
     authentication_classes = [
         authentication.TokenAuthentication,
@@ -340,16 +343,16 @@ class UpdateExamJourneyAPIView(APIView):
 
         if serializer.is_valid():
             progress_data = request.data.get("progress", {})
+            print(f'incoming data {request.data}')
             current_question_text = request.data.get("current_question_text")
             current_question_is_correct = None
-
             logger.info(f"Current question text: {current_question_text}")
             logger.info(f"Progress data: {progress_data}")
 
             for question_id, question_status in progress_data.items():
                 try:
                     question = Question.objects.get(
-                        text=question_status["question_text"]
+                        id=question_status["question_id"]
                     )
                     user_question_status, created = (
                         UserQuestionStatus.objects.get_or_create(
@@ -411,7 +414,6 @@ class UpdateExamJourneyAPIView(APIView):
 
         logger.error(f"Serializer errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class FavoriteListViewSet(viewsets.ModelViewSet):
     queryset = FavoriteList.objects.all()
@@ -533,11 +535,12 @@ class QuestionSearchView(ListView):
         if search_term:
             queryset = Question.objects.filter(
                 Q(text__icontains=search_term)
-                | Q(q_answers__answer__icontains=search_term)
+                | Q(q_answers__answer_text__icontains=search_term)
             ).distinct()
         else:
             queryset = Question.objects.none()
         return queryset
+
 
     def render_to_response(self, context, **response_kwargs):
         questions = context["questions"]
@@ -551,7 +554,7 @@ class QuestionSearchView(ListView):
                     "video_hint": question.video_hint,
                     "is_used": question.is_used,
                     "is_correct": question.is_correct,
-                    "answers": list(question.q_answers.values("id", "answer")),
+                    "answers": list(question.q_answers.values("id", "answer_text")),
                     "correct_answer": str(question.correct_answer),
                     "language": question.language.name,
                     "specificity": question.specificity.name,
@@ -582,15 +585,13 @@ def add_answer(request):
     if request.method == "POST":
         logger.debug("POST data: %s", request.POST)
         answer_text = request.POST.get("answer_text")
-        images = request.FILES.getlist("images")
+        image = request.FILES.get("image")
         question_id = request.POST.get("question_id")
         try:
             question = Question.objects.get(id=question_id)
             question_answer = QuestionAnswer.objects.create(
-                question=question, answer_text=answer_text
+                question=question, answer_text=answer_text, image=image
             )
-            for image in images:
-                AnswerImage.objects.create(question_answer=question_answer, image=image)
             logger.debug("Answer added successfully for question ID %s", question_id)
             return JsonResponse(
                 {"success": True, "message": "Answer added successfully!"}
@@ -605,103 +606,34 @@ def add_answer(request):
 def upload_excel(request):
     if request.method == "POST" and request.FILES["file"]:
         excel_file = request.FILES["file"]
-        try:
-            # Create ExcelUpload instance
-            excel_upload = ExcelUpload.objects.create(file=excel_file)
+        excel_upload = ExcelUpload.objects.create(file=excel_file)
 
-            # Read Excel file and print basic info
-            df = pd.read_excel(excel_file)
-            print(f"Total rows in Excel: {len(df)}")
-            print(f"Columns found: {df.columns.tolist()}")
-            print(f"First row sample: {df.iloc[0].to_dict()}")
+        # Trigger the Celery task
+        process_excel_file.delay(excel_upload.id)
 
-            # Iterate through the DataFrame
-            for index, row in df.iterrows():
-                try:
-                    # Print progress every 100 rows
-                    if index % 100 == 0:
-                        print(f"Processing row {index}")
-
-                    # Create question with all available fields
-                    question_data = {
-                        "excel_upload": excel_upload,
-                        "text": str(row.get("text", "")),
-                        "language": str(row.get("language", "")),
-                        "specificity": str(row.get("specificity", "")),
-                        "level": str(row.get("level", "")),
-                        "years": str(row.get("years", "")),
-                        "subjects": str(row.get("subjects", "")),
-                        "systems": str(row.get("systems", "")),
-                        "topics": str(row.get("topics", "")),
-                        "hint": str(row.get("hint", "")),
-                        "video_hint": str(row.get("video_hint", "")),
-                    }
-
-                    # Create the question
-                    question = TempQuestion.objects.create(**question_data)
-
-                    # Handle answers
-                    answers = row.get("answers", "")
-                    correct_answer = row.get("correct_answer", "")
-
-                    if pd.notna(answers):  # Check if answers is not NaN
-                        if isinstance(answers, str):
-                            answer_list = [
-                                a.strip() for a in answers.split(",") if a.strip()
-                            ]
-                        else:
-                            answer_list = [str(answers).strip()]
-
-                        # Print answers debug info
-                        print(f"Row {index} - Answers found: {len(answer_list)}")
-
-                        for i, answer in enumerate(answer_list):
-                            if answer:  # Only create if answer is not empty
-                                TempAnswer.objects.create(
-                                    question=question,
-                                    text=answer,
-                                    is_correct=(str(i) == str(correct_answer)),
-                                )
-
-                except Exception as e:
-                    print(f"Error processing row {index}: {str(e)}")
-                    print(f"Row data: {row.to_dict()}")
-                    continue
-
-            # Print final statistics
-            final_questions = excel_upload.temp_questions.count()
-            final_answers = TempAnswer.objects.filter(
-                question__excel_upload=excel_upload
-            ).count()
-            print(f"Final statistics:")
-            print(f"Total questions created: {final_questions}")
-            print(f"Total answers created: {final_answers}")
-
-            return redirect("questions:upload_summary", upload_id=excel_upload.id)
-
-        except Exception as e:
-            print(f"Major error during upload: {str(e)}")
-            print(f"Error type: {type(e).__name__}")
-            import traceback
-
-            traceback.print_exc()
-            return JsonResponse(
-                {
-                    "success": False,
-                    "message": f"Error processing file: {str(e)}",
-                    "error_type": str(type(e).__name__),
-                },
-                status=400,
-            )
+        return JsonResponse(
+            {
+                "success": True,
+                "redirect_url": reverse(
+                    "questions:upload_summary", args=[excel_upload.id]
+                ),
+            }
+        )
 
     return render(request, "upload_excel.html")
 
 
 def upload_summary(request, upload_id):
     excel_upload = get_object_or_404(ExcelUpload, id=upload_id)
-    questions = excel_upload.temp_questions.all()
 
-    # Calculate statistics
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        if excel_upload.status != "complete":
+            return JsonResponse({"upload_complete": False})
+        else:
+            return JsonResponse({"upload_complete": True})
+
+    # Ensure that only questions related to this ExcelUpload are counted
+    questions = excel_upload.temp_questions.all()
     total_questions = questions.count()
     total_answers = TempAnswer.objects.filter(
         question__excel_upload=excel_upload
@@ -711,36 +643,30 @@ def upload_summary(request, upload_id):
         .filter(answer_count=0)
         .count()
     )
-
     questions_with_correct_answers = (
         questions.filter(temp_answers__is_correct=True).distinct().count()
     )
 
-    # Get unique values and their counts using annotations
     language_stats = dict(
         questions.values("language")
         .annotate(count=Count("id"))
         .values_list("language", "count")
     )
-
     specificity_stats = dict(
         questions.values("specificity")
         .annotate(count=Count("id"))
         .values_list("specificity", "count")
     )
-
     level_stats = dict(
         questions.values("level")
         .annotate(count=Count("id"))
         .values_list("level", "count")
     )
-
     year_stats = dict(
         questions.values("years")
         .annotate(count=Count("id"))
         .values_list("years", "count")
     )
-
     subject_stats = dict(
         questions.values("subjects")
         .annotate(count=Count("id"))
@@ -753,11 +679,11 @@ def upload_summary(request, upload_id):
         "total_answers": total_answers,
         "questions_without_answers": questions_without_answers,
         "questions_with_correct_answers": questions_with_correct_answers,
-        "unique_languages": language_stats.keys(),
-        "unique_specificities": specificity_stats.keys(),
-        "unique_levels": level_stats.keys(),
-        "unique_years": year_stats.keys(),
-        "unique_subjects": subject_stats.keys(),
+        "unique_languages": list(language_stats.keys()),
+        "unique_specificities": list(specificity_stats.keys()),
+        "unique_levels": list(level_stats.keys()),
+        "unique_years": list(year_stats.keys()),
+        "unique_subjects": list(subject_stats.keys()),
         "language_stats": language_stats,
         "specificity_stats": specificity_stats,
         "level_stats": level_stats,
@@ -772,19 +698,32 @@ def preview_questions(request, upload_id):
     excel_upload = get_object_or_404(ExcelUpload, id=upload_id)
     questions = excel_upload.temp_questions.all()
 
-    # Apply filters
-    language = request.GET.get("language")
-    specificity = request.GET.get("specificity")
-    level = request.GET.get("level")
+    # Get filter values
+    selected_language = request.GET.get("language")
+    selected_specificity = request.GET.get("specificity")
+    selected_level = request.GET.get("level")
     has_answers = request.GET.get("has_answers")
     has_correct = request.GET.get("has_correct")
 
-    if language:
-        questions = questions.filter(language=language)
-    if specificity:
-        questions = questions.filter(specificity=specificity)
-    if level:
-        questions = questions.filter(level=level)
+    # Apply filters, handling None/nan values
+    if selected_language:
+        questions = (
+            questions.exclude(language__isnull=True)
+            .exclude(language="nan")
+            .filter(language=selected_language)
+        )
+    if selected_specificity:
+        questions = (
+            questions.exclude(specificity__isnull=True)
+            .exclude(specificity="nan")
+            .filter(specificity=selected_specificity)
+        )
+    if selected_level:
+        questions = (
+            questions.exclude(level__isnull=True)
+            .exclude(level="nan")
+            .filter(level=selected_level)
+        )
     if has_answers == "yes":
         questions = questions.filter(temp_answers__isnull=False).distinct()
     elif has_answers == "no":
@@ -794,50 +733,129 @@ def preview_questions(request, upload_id):
     elif has_correct == "no":
         questions = questions.exclude(temp_answers__is_correct=True)
 
-    # Pagination
-    page_size = request.GET.get("page_size", 50)  # Default to 50 items per page
-    try:
-        page_size = int(page_size)
-    except ValueError:
-        page_size = 50
+    # Get unique values for filters, excluding None and 'nan'
+    languages = (
+        questions.exclude(language__isnull=True)
+        .exclude(language="nan")
+        .values_list("language", flat=True)
+        .distinct()
+    )
+    specificities = (
+        questions.exclude(specificity__isnull=True)
+        .exclude(specificity="nan")
+        .values_list("specificity", flat=True)
+        .distinct()
+    )
+    levels = (
+        questions.exclude(level__isnull=True)
+        .exclude(level="nan")
+        .values_list("level", flat=True)
+        .distinct()
+    )
 
+    # Page size handling
+    page_size_options = [10, 25, 50, 100]
+    page_size = int(request.GET.get("page_size", 10))
+    if page_size not in page_size_options:
+        page_size = 10
+
+    # Pagination
+    paginator = Paginator(questions, page_size)
     page_number = request.GET.get("page", 1)
     try:
-        page_number = int(page_number)
-    except ValueError:
-        page_number = 1
-
-    paginator = Paginator(questions, page_size)
-    page_obj = paginator.get_page(page_number)
+        page_obj = paginator.get_page(page_number)
+    except (PageNotAnInteger, EmptyPage):
+        page_obj = paginator.get_page(1)
 
     # Calculate page range with ellipsis
-    page_range = get_page_range(paginator, page_obj.number)
+    show_adjacent = 2
+    page_range = get_page_range(paginator, int(page_obj.number), show_adjacent)
 
+    # Count questions with non-null/non-nan values
     context = {
         "excel_upload": excel_upload,
         "questions": page_obj,
-        "languages": excel_upload.temp_questions.values_list(
-            "language", flat=True
-        ).distinct(),
-        "specificities": excel_upload.temp_questions.values_list(
-            "specificity", flat=True
-        ).distinct(),
-        "levels": excel_upload.temp_questions.values_list(
-            "level", flat=True
-        ).distinct(),
-        "selected_language": language,
-        "selected_specificity": specificity,
-        "selected_level": level,
-        "has_answers": has_answers,
-        "has_correct": has_correct,
         "page_obj": page_obj,
         "page_range": page_range,
         "page_size": page_size,
-        "page_size_options": [10, 25, 50, 100, 200],
+        "page_size_options": page_size_options,
         "total_questions": questions.count(),
+        # Filter options
+        "languages": languages,
+        "specificities": specificities,
+        "levels": levels,
+        "selected_language": selected_language,
+        "selected_specificity": selected_specificity,
+        "selected_level": selected_level,
+        "has_answers": has_answers,
+        "has_correct": has_correct,
+        # Question counts excluding nan values
+        "questions_with_answers_count": questions.filter(temp_answers__isnull=False)
+        .distinct()
+        .count(),
+        "questions_with_language_count": questions.exclude(language__isnull=True)
+        .exclude(language="nan")
+        .count(),
+        "questions_with_year_count": questions.exclude(years__isnull=True)
+        .exclude(years="nan")
+        .count(),
+        "questions_with_specificity_count": questions.exclude(specificity__isnull=True)
+        .exclude(specificity="nan")
+        .count(),
+        "questions_with_level_count": questions.exclude(level__isnull=True)
+        .exclude(level="nan")
+        .count(),
+        "questions_with_system_count": questions.exclude(systems__isnull=True)
+        .exclude(systems="nan")
+        .count(),
+        "questions_with_topic_count": questions.exclude(topics__isnull=True)
+        .exclude(topics="nan")
+        .count(),
     }
 
     return render(request, "preview_questions.html", context)
+
+
+def get_page_range(paginator, current_page, adjacent_pages=2):
+    """Helper function to calculate page range with ellipsis"""
+    total_pages = paginator.num_pages
+
+    # If total pages is small enough, show all pages
+    if total_pages <= adjacent_pages * 2 + 5:
+        return range(1, total_pages + 1)
+
+    # Calculate range with ellipsis
+    pages = []
+
+    # Always include first page
+    pages.append(1)
+
+    # Calculate left range
+    if current_page - adjacent_pages > 2:
+        pages.append("...")
+        start_range = current_page - adjacent_pages
+    else:
+        start_range = 2
+
+    # Calculate right range
+    if current_page + adjacent_pages < total_pages - 1:
+        end_range = current_page + adjacent_pages + 1
+        needs_end_ellipsis = True
+    else:
+        end_range = total_pages
+        needs_end_ellipsis = False
+
+    # Add the range around current page
+    pages.extend(range(start_range, end_range))
+
+    # Add end ellipsis if needed
+    if needs_end_ellipsis:
+        pages.append("...")
+        pages.append(total_pages)
+    elif end_range == total_pages - 1:
+        pages.append(total_pages)
+
+    return pages
 
 
 def get_page_range(paginator, current_page, show_adjacent=2):
@@ -890,16 +908,26 @@ def confirm_question(request, question_id):
         # Handle answers
         for temp_answer in temp_question.temp_answers.all():
             temp_answer.text = request.POST.get(f"answer_{temp_answer.id}")
-            temp_answer.is_correct = "is_correct_{temp_answer.id}" in request.POST
+            temp_answer.is_correct = f"is_correct_{temp_answer.id}" in request.POST
             temp_answer.save()
 
-            TempAnswer.objects.create(
+            # Create QuestionAnswer with image
+            question_answer = QuestionAnswer.objects.create(
                 question=question,
-                text=temp_answer.text,
-                is_correct=temp_answer.is_correct,
+                answer_text=temp_answer.text,
             )
 
-        # Optionally delete the temp records
+            # Transfer image if exists
+            if temp_answer.image:
+                question_answer.image = temp_answer.image
+                question_answer.save()
+
+            # Set as correct answer if applicable
+            if temp_answer.is_correct:
+                question.correct_answer = question_answer
+                question.save()
+
+        # Delete the temp records
         temp_question.delete()
 
         return JsonResponse(
@@ -931,8 +959,12 @@ def update_temp_question(request, question_id):
             # Handle existing answers
             for answer in question.temp_answers.all():
                 answer_text = request.POST.get(f"answer_{answer.id}")
+                answer_image = request.FILES.get(f"image_{answer.id}")
+
                 if answer_text:
                     answer.text = answer_text
+                    if answer_image:
+                        answer.image = answer_image
                     answer.is_correct = str(answer.id) == correct_answer
                     answer.save()
 
@@ -940,10 +972,15 @@ def update_temp_question(request, question_id):
             for key in request.POST.keys():
                 if key.startswith("new_answer_"):
                     new_answer_text = request.POST.get(key)
+                    new_answer_image = request.FILES.get(
+                        f"new_image_{key.split('_')[-1]}"
+                    )
+
                     if new_answer_text.strip():  # Only create if there's actual text
                         new_answer = TempAnswer.objects.create(
                             question=question,
                             text=new_answer_text,
+                            image=new_answer_image,
                             is_correct=(
                                 correct_answer == key.replace("new_answer_", "new_")
                             ),
@@ -982,3 +1019,84 @@ def get_temp_question(request, question_id):
         )
     except Exception as e:
         return JsonResponse({"success": False, "message": str(e)})
+
+
+@csrf_exempt
+def save_questions(request):
+    if request.method == "POST":
+        # Extract options from request
+        with_answers = request.POST.get("withAnswers") == "on"
+        with_language = request.POST.get("withLanguage") == "on"
+        with_year = request.POST.get("withYear") == "on"
+        with_specificity = request.POST.get("withSpecificity") == "on"
+        with_level = request.POST.get("withLevel") == "on"
+        with_system = request.POST.get("withSystem") == "on"
+        with_topic = request.POST.get("withTopic") == "on"
+
+        # Filter questions based on options
+        questions = TempQuestion.objects.all()
+        logger.debug(f"Total questions before filtering: {questions.count()}")
+
+        if with_answers:
+            questions = questions.filter(temp_answers__isnull=False).distinct()
+        if with_language:
+            questions = questions.filter(language__isnull=False).distinct()
+        if with_year:
+            questions = questions.filter(years__isnull=False).distinct()
+        if with_specificity:
+            questions = questions.filter(specificity__isnull=False).distinct()
+        if with_level:
+            questions = questions.filter(level__isnull=False).distinct()
+        if with_system:
+            questions = questions.filter(systems__isnull=False).distinct()
+        if with_topic:
+            questions = questions.filter(topics__isnull=False).distinct()
+
+        logger.debug(f"Total questions after filtering: {questions.count()}")
+
+        # Collect IDs of questions to be processed
+        temp_question_ids = list(questions.values_list("id", flat=True))
+
+        # Trigger the Celery task
+        save_questions_task.delay(temp_question_ids)
+
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Questions are being saved in the background.",
+                "total_questions": len(temp_question_ids),
+            }
+        )
+
+    return JsonResponse({"success": False, "message": "Invalid request method."})
+
+
+def reset_database(request):
+    # Delete all data except for User
+    Language.objects.all().delete()
+    Specificity.objects.all().delete()
+    Level.objects.all().delete()
+    University.objects.all().delete()
+    Year.objects.all().delete()
+    Subject.objects.all().delete()
+    System.objects.all().delete()
+    Topic.objects.all().delete()
+    QuestionAnswer.objects.all().delete()
+    AnswerImage.objects.all().delete()
+    Question.objects.all().delete()
+    ExamJourney.objects.all().delete()
+    Note.objects.all().delete()
+    Report.objects.all().delete()
+    UserQuestionStatus.objects.all().delete()
+    ExcelUpload.objects.all().delete()
+    TempQuestion.objects.all().delete()
+    TempAnswer.objects.all().delete()
+    Answer.objects.all().delete()
+
+    # Redirect to a success page or home page
+    return redirect("home")  # Change 'home' to your desired redirect URL name
+
+
+def check_upload_status(request, upload_id):
+    excel_upload = get_object_or_404(ExcelUpload, id=upload_id)
+    return JsonResponse({"upload_complete": excel_upload.processed})

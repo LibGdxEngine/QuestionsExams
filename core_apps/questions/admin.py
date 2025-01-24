@@ -15,7 +15,6 @@ from .models import (
     Report,
     University,
     UserQuestionStatus,
-    AnswerImage,
     ExcelUpload,
     TempQuestion,
     TempAnswer,
@@ -29,11 +28,13 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 
-# Inline Model for AnswerImage
-class AnswerImageInline(admin.TabularInline):
-    model = AnswerImage
+# Inline Model for QuestionAnswer
+class QuestionAnswerInline(admin.TabularInline):
+    model = QuestionAnswer
     extra = 1
-    fields = ["image", "image_preview"]
+    min_num = 1
+    can_delete = True
+    fields = ["answer_text", "image", "image_preview"]
     readonly_fields = ["image_preview"]
 
     def image_preview(self, obj):
@@ -42,34 +43,6 @@ class AnswerImageInline(admin.TabularInline):
                 '<img src="{}" style="width: 100px; height: auto;" />', obj.image.url
             )
         return "No Image"
-
-
-# Inline Model for QuestionAnswer
-class QuestionAnswerInline(admin.TabularInline):
-    model = QuestionAnswer
-    extra = 1
-    min_num = 1
-    can_delete = True
-    fields = ["answer_text"]
-    readonly_fields = ["edit_button", "get_image_preview"]
-
-    def edit_button(self, obj):
-        return format_html(
-            "<button type=\"button\" onclick=\"window.open('/admin/questions/edit-answer/{}/', 'Edit Answer', 'width=600,height=400');\">Edit</button>",
-            obj.id,
-        )
-
-    def get_image_preview(self, obj):
-        if obj.images.exists():
-            return format_html(
-                "".join(
-                    [
-                        f'<img src="{image.image.url}" width="50" height="50" style="margin: 2px;" />'
-                        for image in obj.images.all()
-                    ]
-                )
-            )
-        return "No Images"
 
 
 @admin.register(Question)
@@ -243,20 +216,23 @@ class QuestionAdmin(ImportExportModelAdmin):
 
 @admin.register(ExcelUpload)
 class ExcelUploadAdmin(admin.ModelAdmin):
-    list_display = ['id', 'uploaded_at', 'processed']
-    list_filter = ['processed', 'uploaded_at']
+    list_display = ["id", "uploaded_at", "processed"]
+    list_filter = ["processed", "uploaded_at"]
+
 
 @admin.register(TempQuestion)
 class TempQuestionAdmin(admin.ModelAdmin):
-    list_display = ['id', 'text', 'language', 'specificity', 'level']
-    list_filter = ['language', 'specificity', 'level']
-    search_fields = ['text']
+    list_display = ["id", "text", "language", "specificity", "level"]
+    list_filter = ["language", "specificity", "level"]
+    search_fields = ["text"]
+
 
 @admin.register(TempAnswer)
 class TempAnswerAdmin(admin.ModelAdmin):
-    list_display = ['id', 'question', 'text', 'is_correct']
-    list_filter = ['is_correct']
-    search_fields = ['text']
+    list_display = ["id", "question", "text", "is_correct"]
+    list_filter = ["is_correct"]
+    search_fields = ["text"]
+
 
 admin.site.register(Language)
 admin.site.register(University)
@@ -268,6 +244,12 @@ admin.site.register(System)
 admin.site.register(Topic)
 admin.site.register(QuestionAnswer)
 admin.site.register(ExamJourney)
-admin.site.register(Report)
+# admin.site.register(Report)
 admin.site.register(UserQuestionStatus)
-admin.site.register(AnswerImage)
+
+
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ['user','__str__','status']
+    list_editable = ['status']
+    list_filter = ['status',]

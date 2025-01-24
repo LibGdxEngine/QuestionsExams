@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Excel</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { margin: 20px; }
+        .upload-container { max-width: 600px; margin: auto; }
+        .progress { margin-top: 20px; }
+        #toast { display: none; position: fixed; top: 20px; right: 20px; background-color: #28a745; color: white; padding: 10px; border-radius: 5px; }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="upload-container">
+        <h1>Upload Excel File</h1>
+        <form id="upload-form" method="post" enctype="multipart/form-data" class="form-inline">
+            {% csrf_token %}
+            <div class="form-group mb-2">
+                <input type="file" name="file" class="form-control-file" required>
+            </div>
+            <button type="submit" class="btn btn-primary mb-2">Upload</button>
+        </form>
+
+        <div id="progress" class="progress">
+            <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+        </div>
+
+        <div id="toast">Upload Complete!</div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#upload-form').on('submit', function(e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+                $.ajax({
+                    url: "{% url 'questions:upload_excel' %}",
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            checkUploadStatus(response.redirect_url);
+                        }
+                    }
+                });
+            });
+
+            function checkUploadStatus(redirectUrl) {
+                var interval = setInterval(function() {
+                    $.get(redirectUrl, function(data) {
+                        if (data.upload_complete) {
+                            clearInterval(interval);
+                            $('#toast').fadeIn().delay(2000).fadeOut();
+                            window.location.href = redirectUrl;
+                        } else {
+                            $('#progress .progress-bar').css('width', '50%').attr('aria-valuenow', 50).text('Processing...');
+                        }
+                    });
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+</html> 

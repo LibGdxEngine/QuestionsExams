@@ -27,6 +27,9 @@ from .views import (
     upload_summary,
     update_temp_question,
     get_temp_question,
+    save_questions,
+    reset_database,
+    check_upload_status,
 )
 
 app_name = "questions"
@@ -80,5 +83,12 @@ urlpatterns = [
         "get-temp-question/<int:question_id>/",
         get_temp_question,
         name="get_temp_question",
+    ),
+    path("save-questions/", save_questions, name="save_questions"),
+    path("reset-database/", reset_database, name="reset_database"),
+    path(
+        "check-upload-status/<int:upload_id>/",
+        check_upload_status,
+        name="check_upload_status",
     ),
 ]

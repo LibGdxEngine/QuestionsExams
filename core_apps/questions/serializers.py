@@ -50,24 +50,17 @@ class UniversitySerializer(serializers.ModelSerializer):
         model = University
         fields = "__all__"
 
-class AnswerImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AnswerImage
-        fields = ["id", "image"]
-
 
 class QuestionAnswerSerializer(serializers.ModelSerializer):
-    images = AnswerImageSerializer(many=True, read_only=True)
     class Meta:
         model = QuestionAnswer
-        fields = "__all__"
+        fields = ["id", "answer_text", "image"]
 
 
 class AnswerSerializer(serializers.ModelSerializer):
-    images = AnswerImageSerializer(many=True, read_only=True)
     class Meta:
         model = QuestionAnswer
-        fields = ["id", "answer","images"]
+        fields = ["id", "answer_text", "image"]
 
     def to_internal_value(self, data):
         data = data.copy()
@@ -87,6 +80,11 @@ class QuestionSerializer(serializers.ModelSerializer):
     language = LanguageSerializer(read_only=True)
     specificity = LanguageSerializer(read_only=True)
     level = LevelSerializer(read_only=True)
+    
+    years = YearSerializer(many=True, read_only=True)
+    subjects = SubjectSerializer(many=True, read_only=True)
+    systems = SystemSerializer(many=True, read_only=True)
+    topics = TopicSerializer(many=True, read_only=True)
 
     class Meta:
         model = Question
@@ -183,7 +181,7 @@ class ExamJourneyUpdateSerializer(serializers.ModelSerializer):
         progress = validated_data.get("progress", instance.progress)
         # Loop through the progress data and update it with 'is_correct'
         for question_text, question_status in progress.items():
-            question = Question.objects.get(text=question_status["question_text"])
+            question = Question.objects.get(id=question_status["question_id"])
             user_question_status, created = UserQuestionStatus.objects.get_or_create(
                 user=self.context["request"].user, question=question, is_used=True
             )
@@ -195,7 +193,7 @@ class ExamJourneyUpdateSerializer(serializers.ModelSerializer):
                 user_question_status.save()
             # Add the 'is_correct' to the progress dict
             progress[question_text]["is_correct"] = user_question_status.is_correct
-            progress[question_text]["correct_answer"] = question.correct_answer.answer
+            progress[question_text]["correct_answer"] = question.correct_answer.answer_text
         # Save the updated progress back to the instance
         instance.progress = progress
         print(instance.current_question)
@@ -226,13 +224,23 @@ class NoteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Note
-        fields = ["id", "user", "question", 'correct_answer', "note_text", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "user",
+            "question",
+            "correct_answer",
+            "note_text",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["id", "created_at", "updated_at", "user"]
-        
+
     def get_correct_answer(self, obj):
         # Get the correct answer from the related Question
         if obj.question.correct_answer:
-            return obj.question.correct_answer.answer  # or customize it further if you need more details
+            return (
+                obj.question.correct_answer.answer_text
+            )  # or customize it further if you need more details
         return None
 
     def create(self, validated_data):

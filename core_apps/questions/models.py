@@ -38,6 +38,9 @@ class Year(models.Model):
 
     def __str__(self):
         return str(self.year)
+        
+    class Meta:
+        ordering = ["year"]
 
     @staticmethod
     def filter_years(language_id, specificity_id, level_id):
@@ -101,12 +104,11 @@ class QuestionAnswer(models.Model):
         on_delete=models.CASCADE,
         related_name="q_answers",
     )
-    answer_text = models.CharField(
-        max_length=300, blank=True, default=""
-    )  # Optional text part of the answer
+    answer_text = models.CharField(max_length=300,blank=True, default="")
+    image = models.ImageField(upload_to="answer_images/", null=True, blank=True)
 
     def __str__(self):
-        return self.answer_text or "Answer with Images"
+        return self.answer_text or "Answer with Image"
 
 
 class AnswerImage(models.Model):
@@ -128,7 +130,7 @@ class Question(models.Model):
     subjects = models.ManyToManyField(Subject)
     systems = models.ManyToManyField(System)
     topics = models.ManyToManyField(Topic)
-    hint = models.CharField(max_length=300, blank=True, default="")
+    hint = models.TextField(blank=True, default="")
     video_hint = models.URLField(blank=True, default="")
     # answers = models.ManyToManyField(QuestionAnswer, related_name='questions')
     correct_answer = models.ForeignKey(
@@ -208,6 +210,7 @@ class ExcelUpload(models.Model):
     file = models.FileField(upload_to="excel_uploads/")
     uploaded_at = models.DateTimeField(default=timezone.now)
     processed = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, default="pending")
 
     def __str__(self):
         return f"Excel Upload {self.id} - {self.uploaded_at}"
@@ -234,6 +237,7 @@ class TempAnswer(models.Model):
         TempQuestion, on_delete=models.CASCADE, related_name="temp_answers"
     )
     text = models.TextField()
+    image = models.ImageField(upload_to="temp_answer_images/", null=True, blank=True)
     is_correct = models.BooleanField(default=False)
 
 
