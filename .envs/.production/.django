@@ -32,5 +32,3 @@ DJANGO_DEFAULT_FROM_EMAIL=letaskono.app2@gmail.com
 DOMAIN=app.krokplus.com
 SIGNING_KEY=your-secret-key-here
 
-GOOGLE_OAUTH2_KEY=527835727909-ih4vr6ofhac8jvv6k252hq4llk1plv9b.apps.googleusercontent.com
-GOOGLE_OAUTH2_SECRET=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
