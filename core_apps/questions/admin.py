@@ -253,3 +253,14 @@ class ReportAdmin(admin.ModelAdmin):
     list_display = ['user','__str__','status']
     list_editable = ['status']
     list_filter = ['status',]
+
+
+from .models import HomePage, FAQ
+
+@admin.register(HomePage)
+class HomePageAdmin(admin.ModelAdmin):
+    list_display = ["video_url"]
+
+@admin.register(FAQ)
+class FAQAdmin(admin.ModelAdmin):
+    search_fields = ["faq", "answer"]

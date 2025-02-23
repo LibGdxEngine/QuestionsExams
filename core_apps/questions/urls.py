@@ -29,7 +29,7 @@ from .views import (
     get_temp_question,
     save_questions,
     reset_database,
-    check_upload_status,
+    check_upload_status, HomePageAPIView,
 )
 
 app_name = "questions"
@@ -46,7 +46,7 @@ router.register(r"questions", QuestionViewSet)
 router.register(r"favorites", FavoriteListViewSet)
 router.register(r"notes", NoteViewSet)
 router.register(r"university", UniversityViewSet)
-router.register(r"exam-journeys", ExamJourneyViewSet)
+# router.register(r"exam-journeys", ExamJourneyViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
@@ -61,6 +61,7 @@ urlpatterns = [
         name="update-exam-journey",
     ),
     path("search/", QuestionSearchView.as_view(), name="search_questions"),
+    path("home/", HomePageAPIView.as_view(), name="home-api"),
     path("reports/", ReportView.as_view(), name="search_questions"),
     path("count/", QuestionCountView.as_view(), name="question-count"),
     path("add-answer/", add_answer, name="add_answer"),

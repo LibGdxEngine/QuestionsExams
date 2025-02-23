@@ -18,12 +18,15 @@ from social_django.utils import load_strategy, load_backend
 from social_core.backends.oauth import BaseOAuth2
 from django.contrib.auth import get_user_model, login
 from core_apps.questions.models import Question
-from core_apps.users.serializers import UserSerializer, AuthTokenSerializer
+from core_apps.users.models import ActivationCode
+from core_apps.users.serializers import UserSerializer, AuthTokenSerializer, PasswordResetSerializer, \
+    PasswordResetConfirmSerializer
 from main.settings.local import DEFAULT_FROM_EMAIL
 from django.shortcuts import redirect
 from urllib.parse import urlencode
 
 User = get_user_model()
+
 
 @api_view(['GET'])
 def health_check(request):
@@ -43,7 +46,7 @@ class CreateUserView(generics.CreateAPIView):
         # Generate token and send activation link
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
-        activation_link = f"https://app.krokplus.com/api/v1/user/activate/{uid}/{token}/"
+        activation_link = f"http:localhost:8000/api/v1/user/activate/{uid}/{token}/"
         send_mail(
             subject="Activate your account",
             message=f"Hi {user}, use this link to activate your account: {activation_link}",
@@ -75,16 +78,17 @@ class CreateUserView(generics.CreateAPIView):
 class ActivateUser(APIView):
     """View to activate the user once they click the activation link"""
 
-    def get(self, request, uidb64, token):
-        try:
-            uid = force_str(urlsafe_base64_decode(uidb64))
-            user = User.objects.get(pk=uid)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+    def get(self, request):
+        base_url = "https://krok-plus.com/"
+        code = request.GET.get('code')
+        activation_code_instance = ActivationCode.objects.filter(activation_code=code).first()
+        if activation_code_instance:
+            user = activation_code_instance.user
+            # Now you can use the `user` object
+        else:
+            # Handle the case where the activation code is invalid
             user = None
-
-        base_url = "https://krokplus.com/"
-
-        if user is not None and default_token_generator.check_token(user, token):
+        if user is not None:
             user.is_active = True
             user.save()
             # Successful activation
@@ -92,15 +96,13 @@ class ActivateUser(APIView):
                 "message": "Account activated successfully. You can now log in.",
                 "activated": "true",
             }
-            redirect_url = f"{base_url}?{urlencode(params)}"
-            return redirect(redirect_url)
+            return Response(params, status=status.HTTP_201_CREATED)
 
         # Failed activation
         params = {"error": "Invalid activation link", "activated": "false"}
-        redirect_url = f"{base_url}?{urlencode(params)}"
-        return redirect(redirect_url)
+        return Response(params, status=status.HTTP_201_CREATED)
 
-    
+
 class CreateAuthTokenView(ObtainAuthToken):
     """Create a new auth token for user"""
     serializer_class = AuthTokenSerializer
@@ -168,8 +170,6 @@ class SocialLoginView(APIView):
 CLEANUP_KEY = "delete_questions"
 
 
-
-
 class CleanupDatabaseAPIView(APIView):
     def post(self, request, *args, **kwargs):
         # Extract the key from the POST data
@@ -185,4 +185,136 @@ class CleanupDatabaseAPIView(APIView):
             return Response("Invalid key.")
 
 
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils.crypto import get_random_string
+from django.core.cache import cache
+from django.utils import timezone
+from rest_framework.decorators import action
+import logging
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from django.core.files.storage import default_storage
+import os
+from rest_framework.pagination import PageNumberPagination
 
+
+class PasswordResetViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny]
+
+    def request_reset(self, request):
+        serializer = PasswordResetSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data["email"]
+            try:
+                user = User.objects.get(email=email)
+                # Generate password reset token
+                token_generator = default_token_generator
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                token = token_generator.make_token(user)
+
+                # Determine the domain based on the environment
+                if settings.DEBUG:
+                    domain = "krokplus.com"
+                    protocol = "http"
+                else:
+                    domain = settings.FRONTEND_URL
+                    protocol = "https"
+
+                reset_url = f"{protocol}://{domain}/reset-password/{uid}/{token}/"
+                print("DEBUG - Local Reset URL:", reset_url)
+
+                context = {
+                    "user": user,
+                    "uid": uid,
+                    "token": token,
+                    "protocol": protocol,
+                    "domain": domain,
+                    "site_name": settings.SITE_NAME,
+                    "reset_url": reset_url,
+                }
+
+                html_template = "new_system/email/password_reset_email.html"
+                text_template = "new_system/email/password_reset_email.txt"
+
+                subject = f"Password Reset Request - {settings.SITE_NAME}"
+                html_message = render_to_string(html_template, context)
+                plain_message = render_to_string(text_template, context)
+
+                try:
+                    send_mail(
+                        subject=subject,
+                        message=plain_message,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        html_message=html_message,
+                        fail_silently=False,
+                    )
+                    return Response(
+                        {
+                            "message": "Password reset email has been sent.",
+                            "debug_url": reset_url if settings.DEBUG else None,
+                        },
+                        status=status.HTTP_200_OK,
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to send password reset email: {str(e)}")
+                    return Response(
+                        {"error": "Failed to send password reset email."},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+            except User.DoesNotExist:
+                pass
+        return Response(
+            {"message": "Password reset email has been sent if the email exists."},
+            status=status.HTTP_200_OK,
+        )
+
+    def confirm_reset(self, request, uid, token):
+        try:
+            # Decode the uidb64 to get the user's ID
+            uid = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=uid)
+
+            # Verify the token
+            if default_token_generator.check_token(user, token):
+                serializer = PasswordResetConfirmSerializer(data=request.data)
+                if serializer.is_valid():
+                    # Set the new password
+                    user.set_password(serializer.validated_data["new_password"])
+                    user.save()
+                    return Response(
+                        {"message": "Password has been reset successfully."},
+                        status=status.HTTP_200_OK,
+                    )
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Invalid reset token."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response(
+                {"error": "Invalid reset link."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+from allauth.socialaccount.providers.apple.views import AppleOAuth2Adapter
+from dj_rest_auth.registration.views import SocialLoginView
+
+
+class GoogleLogin(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+
+
+class FacebookLogin(SocialLoginView):
+    adapter_class = FacebookOAuth2Adapter
+
+
+class AppleLogin(SocialLoginView):
+    adapter_class = AppleOAuth2Adapter

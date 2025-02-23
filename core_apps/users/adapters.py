@@ -1,87 +1,72 @@
-from collections import OrderedDict
 from urllib.parse import urlsplit
-
-from allauth import app_settings
 from allauth.account.adapter import DefaultAccountAdapter
-from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
-from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.urls import reverse
+from django.conf import settings
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 
-
-def build_absolute_uri(request, location, protocol=None):
-    """request.build_absolute_uri() helper
-
-    Like request.build_absolute_uri, but gracefully handling
-    the case where request is None.
-    """
-    from allauth.account import app_settings as account_settings
-
-    print(f"location {location}")
-    if request is None:
-        if not app_settings.SITES_ENABLED:
-            raise ImproperlyConfigured(
-                "Passing `request=None` requires `sites` to be enabled."
-            )
-        from django.contrib.sites.models import Site
-
-        site = Site.objects.get_current()
-        bits = urlsplit(location)
-        if not (bits.scheme and bits.netloc):
-            uri = "{proto}://{domain}{url}".format(
-                proto=account_settings.DEFAULT_HTTP_PROTOCOL,
-                domain="kau.mftcevents.com",
-                url=location,
-            )
-        else:
-            uri = location
-    else:
-        uri = request.build_absolute_uri(location)
-    # NOTE: We only force a protocol if we are instructed to do so
-    # (via the `protocol` parameter, or, if the default is set to
-    # HTTPS. The latter keeps compatibility with the debatable use
-    # case of running your site under both HTTP and HTTPS, where one
-    # would want to make sure HTTPS links end up in password reset
-    # mails even while they were initiated on an HTTP password reset
-    # form.
-    if not protocol and account_settings.DEFAULT_HTTP_PROTOCOL == "https":
-        protocol = account_settings.DEFAULT_HTTP_PROTOCOL
-    # (end NOTE)
-    if protocol:
-        uri = protocol + ":" + uri.partition(":")[2]
-
-    # swap 127.0.0.1 to fin.com.sa
-    uri = uri.replace("127.0.0.1", "kau.mftcevents.com")
-    # remove :8000
-    uri = uri.replace(":8095", "")
-    print(uri)
-    return uri
-
-
+from django.contrib.auth import get_user_model
 class CustomAccountAdapter(DefaultAccountAdapter):
-    def get_email_confirmation_url(self, request, emailconfirmation):
-        """Constructs the email confirmation (activation) url.
-
-        Note that if you have architected your system such that email
-        confirmations are sent outside of the request context `request`
-        can be `None` here.
+    def _uidb36(self, user):
         """
+        Return the base-36 encoded version of the user ID.
+        Ensuring `user` is an actual `User` instance.
+        """
+        User = get_user_model()
+        
+        if isinstance(user, str):  # If user is a string (like email), retrieve the actual user object
+            user = User.objects.get(email=user)  # or use another identifier if not email
+            
+        return urlsafe_base64_encode(force_bytes(user.pk))
+        
+    def _build_absolute_uri(self, request, path):
+        """Modified URI builder with domain replacement"""
+        uri = super().build_absolute_uri(request, path)
+        
+        # Domain replacements
+        replacements = [
+            ("127.0.0.1:8095", settings.DOMAIN),
+            ("localhost:8020", settings.DOMAIN),
+            ("http://", "https://") if not settings.DEBUG else ("", "")
+        ]
+        
+        for old, new in replacements:
+            uri = uri.replace(old, new)
+            
+        print(f"Final URI: {uri}")  # For debugging
+        return uri
+
+    def get_email_confirmation_url(self, request, emailconfirmation):
         url = reverse("account_confirm_email", args=[emailconfirmation.key])
-        ret = build_absolute_uri(request, url)
-        return ret
+        return self._build_absolute_uri(request, url)
 
     def send_confirmation_mail(self, request, emailconfirmation, signup):
-        current_site = get_current_site(request)
         activate_url = self.get_email_confirmation_url(request, emailconfirmation)
         ctx = {
             "user": emailconfirmation.email_address.user,
             "activate_url": activate_url,
-            "current_site": current_site,
+            "current_site": get_current_site(request),
+            "key": emailconfirmation.key,
+        }
+        self.send_mail(
+            "new_system/email/password_reset_email.html" if signup else "new_system/email/password_reset_email.html",
+            emailconfirmation.email_address.email,
+            ctx
+        )
+
+    def send_password_reset_mail(self, request, user):
+        # Assuming you are using `emailconfirmation` here
+        emailconfirmation = EmailConfirmation.objects.get(email_address__user=user)
+        
+        # Now emailconfirmation is the correct object, and it has a `key` attribute
+        ctx = {
+            "user": user,
+            "activate_url": self.get_email_confirmation_url(request, emailconfirmation),
+            "current_site": get_current_site(request),
             "key": emailconfirmation.key,
             "aboelezz": "aboelezz",
         }
-        if signup:
-            email_template = "account/email/email_confirmation_signup"
-        else:
-            email_template = "account/email/email_confirmation"
-        self.send_mail(email_template, emailconfirmation.email_address.email, ctx)
+        
+        email_template = "account/email/password_reset"
+        self.send_mail(email_template, user.email, ctx)

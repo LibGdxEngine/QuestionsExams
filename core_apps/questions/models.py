@@ -38,7 +38,7 @@ class Year(models.Model):
 
     def __str__(self):
         return str(self.year)
-        
+
     class Meta:
         ordering = ["year"]
 
@@ -104,7 +104,7 @@ class QuestionAnswer(models.Model):
         on_delete=models.CASCADE,
         related_name="q_answers",
     )
-    answer_text = models.CharField(max_length=300,blank=True, default="")
+    answer_text = models.CharField(max_length=300, blank=True, default="")
     image = models.ImageField(upload_to="answer_images/", null=True, blank=True)
 
     def __str__(self):
@@ -247,3 +247,26 @@ class Answer(models.Model):
     )
     text = models.TextField()
     is_correct = models.BooleanField(default=False)
+
+
+class HomePage(models.Model):
+    video_url = models.URLField("Home Page Video URL", max_length=500, blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Home Video"  # Singular name
+        verbose_name_plural = "Home Video Settings"  # Plural name
+
+    def __str__(self):
+        return "Home Page Configuration"
+
+
+class FAQ(models.Model):
+    faq = models.CharField("faq", max_length=255)
+    answer = models.TextField("Answer")
+    order = models.PositiveIntegerField("Display Order", default=0)
+
+    def __str__(self):
+        return self.faq
+
+    class Meta:
+        ordering = ["order"]

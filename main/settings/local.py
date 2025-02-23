@@ -11,7 +11,6 @@ DEBUG = True
 SECURE_SSL_REDIRECT = False
 ACCOUNT_ADAPTER = "core_apps.users.adapters.CustomAccountAdapter"
 
-SESSION_COOKIE_SECURE = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
     "http://localhost:3000",
@@ -23,7 +22,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
@@ -32,3 +31,9 @@ EMAIL_HOST_PASSWORD = 'rqqy frdv yyfe hmtc'
 DEFAULT_FROM_EMAIL = 'krokplus313@gmail.com'
 DOMAIN = env("DOMAIN", default="")
 SITE_NAME = "Krok plus"
+
+CORS_ALLOW_CREDENTIALS = True
+SESSION_COOKIE_SECURE = False  # Set True in production
+CSRF_COOKIE_SECURE = False  # Set True in production
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'

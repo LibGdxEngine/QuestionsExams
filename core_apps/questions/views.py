@@ -6,7 +6,8 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import ListView
 from rest_framework import status, authentication
-from rest_framework.generics import CreateAPIView, ListAPIView
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import viewsets
@@ -171,10 +172,15 @@ class QuestionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
+class ExamsPagination(PageNumberPagination):
+    page_size = 20
+
+
 class ExamJourneyListCreateViewV2(ListAPIView):
-    serializer_class = ExamJourneySerializerV2
+    serializer_class = ExamJourneyListSerializerV2
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [filters.SearchFilter]
+    pagination_class = ExamsPagination
     search_fields = [
         "type",
         "questions__text",
@@ -183,6 +189,32 @@ class ExamJourneyListCreateViewV2(ListAPIView):
         "questions__level__name",
         "questions__correct_answer__answer",
     ]
+
+    def get_queryset(self):
+        # Filter ExamJourney objects by the logged-in user
+        return ExamJourney.objects.filter(user=self.request.user)
+
+
+class ExamJourneyUpdateView(UpdateAPIView):
+    queryset = ExamJourney.objects.all()
+    serializer_class = ExamJourneyUpdateSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        # Custom logic (e.g., logging)
+        # print(f"Updated ExamJourney with ID: {instance.id}")
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ExamJourneyDetailViewV2(RetrieveUpdateDestroyAPIView):
+    serializer_class = ExamJourneyDetailsSerializerV2
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         # Filter ExamJourney objects by the logged-in user
@@ -234,6 +266,7 @@ class CreateExamJourneyAPIView(APIView):
                 filters &= Q(
                     language_id=question_filter_serializer.validated_data["language"]
                 )
+
             if "specificity" in question_filter_serializer.validated_data:
                 filters &= Q(
                     specificity_id=question_filter_serializer.validated_data[
@@ -262,29 +295,11 @@ class CreateExamJourneyAPIView(APIView):
                 filters &= Q(
                     topics__id__in=question_filter_serializer.validated_data["topics"]
                 )
-
-            # Filter based on is_used and is_correct fields
-            user = request.user
-            is_used = question_filter_serializer.validated_data.get("is_used")
-            if is_used is not None:
-                filters &= Q(
-                    userquestionstatus__user=user, userquestionstatus__is_used=is_used
-                )
-
-            # Filter based on is_correct only if explicitly provided
-            is_correct = question_filter_serializer.validated_data.get("is_correct")
-            if is_correct is not None:
-                filters &= Q(
-                    userquestionstatus__user=user,
-                    userquestionstatus__is_correct=is_correct,
-                )
-
             number_of_questions = question_filter_serializer.validated_data[
                 "number_of_questions"
             ]
             selected_questions = list(Question.objects.filter(filters).distinct())
             questions = selected_questions[:number_of_questions]
-
             if len(questions) < number_of_questions:
                 return Response(
                     {"error": "Not enough questions available for the given filters"},
@@ -328,6 +343,7 @@ class CreateExamJourneyAPIView(APIView):
 
 logger = logging.getLogger("core_apps.questions")
 
+
 class UpdateExamJourneyAPIView(APIView):
     authentication_classes = [
         authentication.TokenAuthentication,
@@ -343,12 +359,8 @@ class UpdateExamJourneyAPIView(APIView):
 
         if serializer.is_valid():
             progress_data = request.data.get("progress", {})
-            print(f'incoming data {request.data}')
             current_question_text = request.data.get("current_question_text")
             current_question_is_correct = None
-            logger.info(f"Current question text: {current_question_text}")
-            logger.info(f"Progress data: {progress_data}")
-
             for question_id, question_status in progress_data.items():
                 try:
                     question = Question.objects.get(
@@ -364,26 +376,18 @@ class UpdateExamJourneyAPIView(APIView):
 
                     user_question_status.is_used = True
                     user_question_status.is_correct = (
-                        question.q_answers.all()[question_status["answer"]]
-                        == question.correct_answer
+                            question.q_answers.all()[question_status["answer"]]
+                            == question.correct_answer
                     )
                     user_question_status.save()
-
-                    logger.info(
-                        f"Question: {question_status['question_text']}, Is correct: {user_question_status.is_correct}"
-                    )
 
                     # If this is the current question, store its is_correct value
                     if question_status["question_text"] == current_question_text:
                         current_question_is_correct = user_question_status.is_correct
-                        logger.info(
-                            f"Current question is_correct: {current_question_is_correct}"
-                        )
+
 
                 except Question.DoesNotExist:
-                    logger.error(
-                        f'Question with text "{question_status["question_text"]}" not found.'
-                    )
+
                     return Response(
                         {
                             "error": f'Question with text "{question_status["question_text"]}" not found.'
@@ -391,9 +395,7 @@ class UpdateExamJourneyAPIView(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 except Exception as e:
-                    logger.error(
-                        f"Error processing question {question_status['question_text']}: {str(e)}"
-                    )
+
                     return Response(
                         {"error": f"Error processing question: {str(e)}"},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -408,12 +410,10 @@ class UpdateExamJourneyAPIView(APIView):
                 logger.warning("current_question_is_correct is None")
                 data["is_correct"] = None
 
-            logger.info(f"Final response data: {data}")
-
             return Response(data, status=status.HTTP_200_OK)
 
-        logger.error(f"Serializer errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class FavoriteListViewSet(viewsets.ModelViewSet):
     queryset = FavoriteList.objects.all()
@@ -540,7 +540,6 @@ class QuestionSearchView(ListView):
         else:
             queryset = Question.objects.none()
         return queryset
-
 
     def render_to_response(self, context, **response_kwargs):
         questions = context["questions"]
@@ -870,8 +869,8 @@ def get_page_range(paginator, current_page, show_adjacent=2):
 
     # Add pages around current page
     for page_num in range(
-        max(2, current_page - show_adjacent),
-        min(total_pages, current_page + show_adjacent + 1),
+            max(2, current_page - show_adjacent),
+            min(total_pages, current_page + show_adjacent + 1),
     ):
         if page_range[-1] != page_num - 1:
             page_range.append("...")
@@ -982,7 +981,7 @@ def update_temp_question(request, question_id):
                             text=new_answer_text,
                             image=new_answer_image,
                             is_correct=(
-                                correct_answer == key.replace("new_answer_", "new_")
+                                    correct_answer == key.replace("new_answer_", "new_")
                             ),
                         )
 
@@ -1100,3 +1099,15 @@ def reset_database(request):
 def check_upload_status(request, upload_id):
     excel_upload = get_object_or_404(ExcelUpload, id=upload_id)
     return JsonResponse({"upload_complete": excel_upload.processed})
+
+
+class HomePageAPIView(APIView):
+    def get(self, request):
+        home_page = HomePage.objects.first()  # Get the single homepage config
+        faqs = FAQ.objects.all()  # Get all FAQs
+
+        data = {
+            "video_url": home_page.video_url if home_page else None,
+            "faqs": FAQSerializer(faqs, many=True).data
+        }
+        return Response(data)

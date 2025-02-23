@@ -3,7 +3,7 @@ from .base import env
 
 DEBUG = True
 
-ADMINS = [("Ahmed Fathy", "letaskono.app@gmail.com")]
+ADMINS = [("Admin", "admin@gmail.com")]
 
 # TODO: add domain name of the production server
 CSRF_TRUSTED_ORIGINS = [
@@ -51,11 +51,11 @@ CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = None
 
 # TODO: change to 518400 seconds later
-# SECURE_HSTS_SECONDS = 60
+SECURE_HSTS_SECONDS = 60
 
-# SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAIN", default=True)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAIN", default=True)
 
-# SECURE_CONTENT_TYPE_NOSNIFF = env.bool("DJANGO_SECURE_CONTENT_TYPE_NOSNIFF", default=True)
+SECURE_CONTENT_TYPE_NOSNIFF = env.bool("DJANGO_SECURE_CONTENT_TYPE_NOSNIFF", default=True)
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 

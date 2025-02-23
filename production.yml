@@ -1,74 +1,70 @@
 version: "3.9"
 
 services:
-  es:
-    image: elasticsearch:7.17.16
-    environment:
-      - discovery.type=single-node
-    ports:
-      - "9200:9200"
+  api: &api
+    build:
+      context: .
+      dockerfile: ./docker/production/django/Dockerfile
+    command: /start
+    image: krok_api
+    restart: always
+    volumes:
+      - /srv/letaskono/staticfiles:/app/staticfiles
+      - /srv/letaskono/mediafiles:/app/mediafiles
+    env_file:
+      - ./.envs/.production/.django
+      - ./.envs/.production/.postgres
+    depends_on:
+      - postgres
+      - redis
+#      - es
     networks:
-      - app_network
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1g
+      - reverseproxy_nw
+
+  postgres:
+    build:
+      context: .
+      dockerfile: ./docker/production/postgres/Dockerfile
+    image: krok_api_database
+    restart: always
+    volumes:
+      - production_postgres_data:/var/lib/postgresql/data
+      - production_postgres_data_backups:/backups
+    env_file:
+      - ./.envs/.production/.postgres
+    networks:
+      - reverseproxy_nw
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     networks:
-      - app_network
-
+      - reverseproxy_nw
+    restart: always
   celery_worker:
-    build:
-      context: .
-      dockerfile: ./docker/production/django/Dockerfile
-    env_file:
-      - ./.envs/.production/.django
-    volumes:
-      - static_volume:/app/staticfiles
-      - media_volume:/app/mediafiles
-      - ./docker/production/django/celery/worker/start:/start-celeryworker
+    <<: *api
+    image: krok_api_celery_worker
     command: /start-celeryworker
+    restart: always
     networks:
-      - app_network
+      - reverseproxy_nw
 
   flower:
-    build:
-      context: .
-      dockerfile: ./docker/production/django/Dockerfile
-    env_file:
-      - ./.envs/.production/.django
-    volumes:
-      - ./docker/production/django/celery/flower/start:/start-flower
+    <<: *api
+    image: krok_api_flower
     command: /start-flower
-    ports:
-      - "5555:5555"
-    networks:
-      - app_network
-
-  django:
-    build:
-      context: .
-      dockerfile: ./docker/production/django/Dockerfile
-    env_file:
-      - ./.envs/.production/.django
+    restart: always
     volumes:
-      - static_volume:/app/staticfiles
-      - media_volume:/app/mediafiles
-    ports:
-      - "8002:8000"
+      - flower_data:/data
     networks:
-      - app_network
-    command: gunicorn main.wsgi:application --bind 0.0.0.0:8000
+      - reverseproxy_nw
 
 networks:
-  app_network:
-    driver: bridge
+  reverseproxy_nw:
+    external: true
 
 volumes:
-  static_volume:
-  media_volume:
+  static_volume: { }
+  media_volume: { }
+  production_postgres_data: { }
+  production_postgres_data_backups: { }
+  flower_data: { }
