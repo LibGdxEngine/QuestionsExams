@@ -25,3 +25,4 @@ django_extensions
 social-auth-app-django==5.4.1
 django-allauth
 dj-rest-auth==7.0.1
+djangorestframework-simplejwt
