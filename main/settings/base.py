@@ -55,6 +55,9 @@ THIRD_PARTY_APPS = [
     "import_export",
     "dj_rest_auth",
     "dj_rest_auth.registration",
+    'allauth',
+    'allauth.account',
+    'rest_framework.authtoken',
 ]
 
 LOCAL_APPS = [
