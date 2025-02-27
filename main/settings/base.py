@@ -57,7 +57,6 @@ THIRD_PARTY_APPS = [
     "dj_rest_auth.registration",
     'allauth',
     'allauth.account',
-    'rest_framework.authtoken',
 ]
 
 LOCAL_APPS = [
