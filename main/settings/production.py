@@ -28,6 +28,7 @@ print(f"{SECRET_KEY} key")
 ALLOWED_HOSTS = [
     "app.krokplus.com",
     "93.127.203.112",
+    "krokplus.com",
     "www.krokplus.com",
     "www.app.krokplus.com",
     "localhost",

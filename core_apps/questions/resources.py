@@ -30,7 +30,7 @@ class NewAnswersManyToManyWidget(ManyToManyWidget):
         with transaction.atomic():
             for item_name in item_names:
                 # Retrieve or create the QuestionAnswer based on the answer text
-                obj, created = self.model.objects.get_or_create(**{"answer": item_name})
+                obj, created = self.model.objects.get_or_create(**{"answer_text": item_name})
                 items.append(
                     obj
                 )  # Collect the primary keys of the QuestionAnswer objects
@@ -44,7 +44,7 @@ class NewAnswersManyToManyWidget(ManyToManyWidget):
         if not value or not obj.pk:  # Ensure the obj has been saved (has a primary key)
             return ""
         # Return a comma-separated list of answer texts instead of IDs or object representations
-        return ", ".join([answer.answer for answer in value.all()])
+        return ", ".join([answer.answer_text for answer in value.all()])
 
 
 class AnswersManyToManyWidget(ManyToManyWidget):
@@ -215,12 +215,12 @@ class QuestionResource(resources.ModelResource):
     answers = fields.Field(
         column_name="answers",
         attribute="q_answers",
-        widget=NewAnswersManyToManyWidget(QuestionAnswer, "answer"),
+        widget=NewAnswersManyToManyWidget(QuestionAnswer, "answer_text"),
     )
     correct_answer = fields.Field(
         column_name="correct_answer",
         attribute="correct_answer",
-        widget=SingleValueForeignKeyWidget(QuestionAnswer, "answer"),
+        widget=SingleValueForeignKeyWidget(QuestionAnswer, "answer_text"),
     )
 
     class Meta:
@@ -290,7 +290,7 @@ class QuestionResource(resources.ModelResource):
         answer_objects = []
         for answer_text in answers_list:
             answer, created = QuestionAnswer.objects.get_or_create(
-                question=question, answer=answer_text
+                question=question, answer_text=answer_text
             )
             answer_objects.append(answer)
 
