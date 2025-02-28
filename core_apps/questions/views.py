@@ -25,9 +25,7 @@ from .models import (
     ExcelUpload,
 )
 import logging
-import pandas as pd
 from django.db.models import Count
-from collections import Counter
 from django.urls import reverse
 from django.core.paginator import Paginator
 from .tasks import process_excel_file, save_questions_task
