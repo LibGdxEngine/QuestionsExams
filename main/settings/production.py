@@ -1,9 +1,13 @@
 from .base import *  # noqa
 from .base import env
 
-DEBUG = True
+DEBUG = False
 
 ADMINS = [("Admin", "admin@gmail.com")]
+
+SECRET_KEY = env(
+    "DJANGO_SECRET_KEY", default="o4-a9pg_xQayK-m21UgkyJKwda2HFOR5-OFlkrGu94Mw1DE4mes"
+)
 
 # TODO: add domain name of the production server
 CSRF_TRUSTED_ORIGINS = [

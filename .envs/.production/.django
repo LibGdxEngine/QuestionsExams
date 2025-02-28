@@ -28,7 +28,7 @@ EMAIL_USE_SSL=False
 EMAIL_HOST_USER=letaskono.app2@gmail.com
 EMAIL_HOST_PASSWORD=hlasxfgsjfaftjww
 DJANGO_DEFAULT_FROM_EMAIL=letaskono.app2@gmail.com
-
+DJANGO_SECRET_KEY=o4-a9pg_xQayK-m21UgkyJKwda2HFOR5-OFlkrGu94Mw1DE4mes
 DOMAIN=app.krokplus.com
 SIGNING_KEY=your-secret-key-here
 
