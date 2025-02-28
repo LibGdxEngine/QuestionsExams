@@ -110,15 +110,11 @@ class FavoriteListSerializer(serializers.ModelSerializer):
 class ExamJourneyListSerializerV2(serializers.ModelSerializer):
     questions = serializers.SerializerMethodField()
     progress = serializers.SerializerMethodField()
-    question = serializers.SerializerMethodField()
+    first_question = serializers.SerializerMethodField()
 
     class Meta:
         model = ExamJourney
-        fields = ['id', 'type', 'created_at', 'time_left', 'progress', 'questions', 'question']
-
-    def get_question(self, obj):
-        first_question = obj.questions.first()
-        return first_question
+        fields = ['id', 'type', 'created_at', 'time_left', 'progress', 'first_question']
 
     def get_questions(self, obj):
         # Return the count of related Question objects
@@ -143,6 +139,22 @@ class ExamJourneyListSerializerV2(serializers.ModelSerializer):
 
         return progress_list
 
+    def get_first_question(self, obj):
+        """Retrieve the first question's details based on current_question index."""
+        if obj.current_question is None or obj.questions.count() == 0:
+            return None
+
+        questions = list(obj.questions.all())  # Convert QuerySet to list to allow indexing
+        if obj.current_question < len(questions):
+            first_question = questions[obj.current_question]
+            return {
+                "text": first_question.text,
+                "language": first_question.language.name,  # Assuming Language has a name field
+                "specificity": first_question.specificity.name,  # Assuming Specificity has a name field
+                "level": first_question.level.name,  # Assuming Level has a name field
+            }
+
+        return None  # If index is out of range
 
 class ExamJourneyDetailsSerializerV2(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
