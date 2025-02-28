@@ -78,6 +78,7 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 class QuestionSerializer(serializers.ModelSerializer):
     answers = AnswerSerializer(many=True, read_only=True, source="q_answers")
+
     # language = LanguageSerializer(read_only=True)
     # specificity = LanguageSerializer(read_only=True)
     # level = LevelSerializer(read_only=True)
@@ -89,7 +90,8 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        exclude = ["correct_answer", "years", "subjects", "systems", "topics", "level", "specificity", "language"]  # Exclude correct_answer from fields
+        exclude = ["correct_answer", "years", "subjects", "systems", "topics", "level", "specificity",
+                   "language"]  # Exclude correct_answer from fields
 
 
 class FavoriteListSerializer(serializers.ModelSerializer):
@@ -108,10 +110,15 @@ class FavoriteListSerializer(serializers.ModelSerializer):
 class ExamJourneyListSerializerV2(serializers.ModelSerializer):
     questions = serializers.SerializerMethodField()
     progress = serializers.SerializerMethodField()
+    question = serializers.SerializerMethodField()
 
     class Meta:
         model = ExamJourney
-        fields = ['id', 'type', 'created_at', 'time_left', 'progress', 'questions']
+        fields = ['id', 'type', 'created_at', 'time_left', 'progress', 'questions', 'question']
+
+    def get_question(self, obj):
+        first_question = obj.questions.first()
+        return first_question
 
     def get_questions(self, obj):
         # Return the count of related Question objects
@@ -140,6 +147,7 @@ class ExamJourneyListSerializerV2(serializers.ModelSerializer):
 class ExamJourneyDetailsSerializerV2(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
     progress = serializers.SerializerMethodField()
+    questions = serializers.SerializerMethodField()
 
     class Meta:
         model = ExamJourney
@@ -195,6 +203,7 @@ class ExamJourneySerializer(serializers.ModelSerializer):
 
         return progress_list
 
+
 class ProgressField(serializers.Field):
     def to_representation(self, value):
         # Convert the progress field to a dictionary for serialization
@@ -230,8 +239,10 @@ class ProgressField(serializers.Field):
 
         return processed_progress
 
+
 class ExamJourneyUpdateSerializer(serializers.ModelSerializer):
     progress = ProgressField()
+
     class Meta:
         model = ExamJourney
         fields = ["time_left", "progress", "current_question"]
@@ -383,10 +394,12 @@ class ReportSerializer(serializers.ModelSerializer):
 
 from .models import HomePage, FAQ
 
+
 class HomePageSerializer(serializers.ModelSerializer):
     class Meta:
         model = HomePage
         fields = ["video_url"]
+
 
 class FAQSerializer(serializers.ModelSerializer):
     class Meta:
