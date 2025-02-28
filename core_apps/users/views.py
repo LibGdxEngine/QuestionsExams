@@ -46,7 +46,7 @@ class CreateUserView(generics.CreateAPIView):
         # Generate token and send activation link
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
-        activation_link = f"http:localhost:8000/api/v1/user/activate/{uid}/{token}/"
+        activation_link = f"https://krokplus.com:8000/api/v1/user/activate/{uid}/{token}/"
         send_mail(
             subject="Activate your account",
             message=f"Hi {user}, use this link to activate your account: {activation_link}",
