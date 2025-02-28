@@ -15,8 +15,6 @@ from .models import (
     QuestionAnswer,
 )
 import pandas as pd
-
-
 @shared_task
 def process_excel_file(excel_upload_id):
     try:
