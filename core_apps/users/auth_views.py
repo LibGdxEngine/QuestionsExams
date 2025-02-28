@@ -246,7 +246,7 @@ class PasswordReset(mixins.CreateModelMixin, viewsets.GenericViewSet):
                            <p>You requested to reset the password</p>
                            <p>use this code:</p>
                            <div class="code">
-                               <strong>https://krokplus.com/api/v1/user/passreset/?code={code}</strong>
+                               <strong>https://www.krokplus.com/reset-password/?code={code}</strong>
                            </div>
                        </div>
                        <div class="footer">
