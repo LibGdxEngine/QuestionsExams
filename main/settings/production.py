@@ -27,8 +27,6 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
 ]
 
-SECRET_KEY = env("DJANGO_SECRET_KEY", default="your-secret-key-her22e")
-print(f"{SECRET_KEY} key")
 ALLOWED_HOSTS = [
     "app.krokplus.com",
     "93.127.203.112",
