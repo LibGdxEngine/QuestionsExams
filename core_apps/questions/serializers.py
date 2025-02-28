@@ -160,7 +160,6 @@ class ExamJourneyListSerializerV2(serializers.ModelSerializer):
 class ExamJourneyDetailsSerializerV2(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
     progress = serializers.SerializerMethodField()
-    questions = serializers.SerializerMethodField()
 
     class Meta:
         model = ExamJourney
