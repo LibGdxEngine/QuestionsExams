@@ -53,8 +53,8 @@ THIRD_PARTY_APPS = [
     "django_extensions",
     "social_django",
     "import_export",
-    "dj_rest_auth",
-    "dj_rest_auth.registration",
+    # "dj_rest_auth",
+    # "dj_rest_auth.registration",
 ]
 
 LOCAL_APPS = [
