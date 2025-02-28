@@ -21,11 +21,11 @@ class LoginSerializer(serializers.Serializer):
 
             # Authentication failed
             if not user:
-                msg = "البريد الالكتروني أو كلمة السر غير صحيحين"
+                msg = "Email or password incorrect"
                 raise serializers.ValidationError(msg, code="authorization")
 
         else:
-            msg = "البريد الالكتروني وكلمة السر مطلوبان"
+            msg = "Email and password are required"
             raise serializers.ValidationError(msg, code="authorization")
 
         attrs["user"] = user
@@ -71,18 +71,18 @@ class ResendActivationCodeSerializer(serializers.Serializer):
         try:
             user = get_user_model().objects.get(email=value)
             if user.email_confirmed:
-                raise serializers.ValidationError("هذا الحساب تم تأكيده مسبقا")
+                raise serializers.ValidationError("This account already exists")
             activation = ActivationCode.objects.get(user=user)
         except User.DoesNotExist:
-            raise serializers.ValidationError("لا يوجد مستخدم مرتبط بهذا البريد الالكتروني")
+            raise serializers.ValidationError("No account with this email address")
         except ActivationCode.DoesNotExist:
-            raise serializers.ValidationError("كود التفعيل غير صحيح")
+            raise serializers.ValidationError("Activation code does not exist")
 
         can_resend, remaining_time = activation.can_resend_code()
         print(can_resend, remaining_time)
         if not can_resend:
             minutes, seconds = divmod(remaining_time.total_seconds(), 60)
-            raise serializers.ValidationError(f"يحب أن تنتظر {int(minutes)} دقيقة و {int(seconds)} قبل طلب كود جديد")
+            raise serializers.ValidationError(f"you need to resend the code {minutes} minutes {seconds} seconds")
 
         self.user = user
         self.activation = activation
@@ -93,8 +93,8 @@ class ResendActivationCodeSerializer(serializers.Serializer):
         self.user.email_activation_code = new_code
         self.user.save()
         # Email content
-        subject = "كود التفعيل لحسابك في مبادرة لتسكنوا"
-        message = f"كود التفعيل الخاص بك هو {new_code}"
+        subject = "Activation Code Resent"
+        message = f"Activation code is {new_code}"
         html_message = f"""
                        <!DOCTYPE html>
                        <html lang="ar" dir="rtl">
@@ -115,19 +115,18 @@ class ResendActivationCodeSerializer(serializers.Serializer):
                        <body>
                            <div class="email-container">
                                <div class="header">
-                                   <h1>لتسكنوا للزواج الإسلامي</h1>
+                                   <h1>Krok app</h1>
                                </div>
                                <div class="content">
-                                   <p>السلام عليكم ورحمة الله وبركاته،</p>
-                                   <p>يرجى استخدام الكود التالي لإتمام تفعيل حسابك:</p>
+                                   <p>Welcome to krok app،</p>
+                                   <p>Use this code to activate your account</p>
                                    <div class="code">
                                        <strong>{new_code}</strong>
                                    </div>
-                                   <p>لتسكنوا للزواج الإسلامي.</p>
+                                   <p>Krok app</p>
                                </div>
                                <div class="footer">
-                                   <p>حقوق الطبع © 2024 لتسكنوا للزواج الإسلامي. جميع الحقوق محفوظة.</p>
-                                   <p>للاستفسار، يرجى زيارة <a href="www.letaskono-zwaj.com">موقعنا</a>.</p>
+                                   <p>krokplus.com</p>
                                </div>
                            </div>
                        </body>

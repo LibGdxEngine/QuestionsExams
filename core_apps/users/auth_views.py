@@ -73,15 +73,15 @@ class AccountActivation(APIView):
 
             if confirmation_code:
                 if confirmation_code.user_already_confirmed():
-                    return Response({"error": "هذا الحساب مفعل مسبقا"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error": "This account already activated"}, status=status.HTTP_400_BAD_REQUEST)
                 if confirmation_code.verify_activation_code(activation_code):
-                    return Response({"success": "تم تفعيل الحساب"}, status=status.HTTP_200_OK)
+                    return Response({"success": "Account activated"}, status=status.HTTP_200_OK)
                 else:
-                    return Response({"error": "كود تفعيل غير صالح"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error": "Activation code is not valid"}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response({"error": "كود تفعيل غير صالح"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Activation code is not valid"}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({"error": "ليس هناك كود تفعيل"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Activation code is not valid"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SignUp(mixins.CreateModelMixin, viewsets.GenericViewSet):
@@ -134,7 +134,7 @@ class SignUp(mixins.CreateModelMixin, viewsets.GenericViewSet):
                                 <p>Welcome to krok app</p>
                                 <p>activate your account with this link:</p>
                                 <div class="code">
-                                    <strong>http://localhost:8000/api/v1/user/activate?code={activation_code_value}</strong>
+                                    <strong>https://krokplus.com/api/v1/user/activate?code={activation_code_value}</strong>
                                 </div>
                                 <p>www.krok-plus.com</p>
                             </div>
@@ -180,7 +180,7 @@ class ResendActivationCodeView(APIView):
         serializer = ResendActivationCodeSerializer(data=request.data)
         if serializer.is_valid():
             new_code = serializer.resend_activation_code()
-            return Response({"detail": "تم إرسال كود التفعيل مجددا"},
+            return Response({"detail": "Code resent"},
                             status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -191,7 +191,7 @@ class Logout(viewsets.ViewSet):
 
     def create(self, request, *args, **kwargs):
         logout(request)
-        return Response({"success": "تم تسجيل الخروج"}, status=status.HTTP_200_OK)
+        return Response({"success": "Logged out"}, status=status.HTTP_200_OK)
 
 
 def generate_verification_code():
@@ -248,12 +248,9 @@ class PasswordReset(mixins.CreateModelMixin, viewsets.GenericViewSet):
                            <div class="code">
                                <strong>https://krokplus.com/api/v1/user/passreset/?code={code}</strong>
                            </div>
-                           <p>إذا لم تطلب إعادة تعيين كلمة المرور، يرجى تجاهل هذا البريد الإلكتروني.</p>
-                           <p>شكراً لاستخدامك موقع "لتسكنوا للزواج الإسلامي".</p>
                        </div>
                        <div class="footer">
-                           <p>حقوق الطبع © 2024. جميع الحقوق محفوظة.</p>
-                           <p>للاستفسار، يرجى زيارة <a href="https://krok-plus.com">موقعنا</a>.</p>
+                           <p><a href="https://krok-plus.com">Website</a>.</p>
                        </div>
                    </div>
                </body>
