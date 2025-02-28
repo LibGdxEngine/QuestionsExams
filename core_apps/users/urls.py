@@ -4,8 +4,7 @@ URL mapping for the users API
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from core_apps.users.views import CreateUserView, CreateAuthTokenView, ManageUserView, SocialLoginView, \
-    SocialLoginTokenView, CleanupDatabaseAPIView, ActivateUser, PasswordResetViewSet, GoogleLogin, FacebookLogin, \
-    AppleLogin
+    SocialLoginTokenView, CleanupDatabaseAPIView, ActivateUser, PasswordResetViewSet
 from rest_framework.authtoken.views import obtain_auth_token
 from core_apps.users.auth_views import Login, Logout, SignUp, PasswordReset, PasswordChange, PasswordResetVerify
 router = DefaultRouter()
