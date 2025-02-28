@@ -25,7 +25,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/production/postgres/Dockerfile
-    image: krok_api_database
+    container_name: postgres
     restart: always
     volumes:
       - production_postgres_data:/var/lib/postgresql/data
@@ -50,7 +50,7 @@ services:
 
   flower:
     <<: *api
-    image: krok_api_flower
+    image: flower
     command: /start-flower
     restart: always
     volumes:
