@@ -1,6 +1,15 @@
 version: "3.9"
 
 services:
+#  es:
+#    image: elasticsearch:7.17.9
+#    restart: always
+#    environment:
+#      - discovery.type=single-node
+#    ports:
+#      - "9200:9200"
+#    networks:
+#      - reverseproxy_nw
   api: &api
     build:
       context: .
@@ -20,12 +29,12 @@ services:
 #      - es
     networks:
       - reverseproxy_nw
-
+  
   postgres:
     build:
       context: .
       dockerfile: ./docker/production/postgres/Dockerfile
-    container_name: postgres
+    image: krok_api_database
     restart: always
     volumes:
       - production_postgres_data:/var/lib/postgresql/data
@@ -34,7 +43,7 @@ services:
       - ./.envs/.production/.postgres
     networks:
       - reverseproxy_nw
-
+  
   redis:
     image: redis:7-alpine
     networks:
@@ -47,10 +56,10 @@ services:
     restart: always
     networks:
       - reverseproxy_nw
-
+  
   flower:
     <<: *api
-    image: flower
+    image: krok_api_flower
     command: /start-flower
     restart: always
     volumes:
