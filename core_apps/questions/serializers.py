@@ -152,6 +152,7 @@ class ExamJourneyListSerializerV2(serializers.ModelSerializer):
                 "language": first_question.language.name,  # Assuming Language has a name field
                 "specificity": first_question.specificity.name,  # Assuming Specificity has a name field
                 "level": first_question.level.name,  # Assuming Level has a name field
+                "year": first_question.years.first().year,
             }
 
         return None  # If index is out of range
