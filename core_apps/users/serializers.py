@@ -70,3 +70,10 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if attrs["new_password"] != attrs["confirm_password"]:
             raise serializers.ValidationError({"error": "Passwords do not match."})
         return attrs
+
+
+class CustomUserDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'first_name', 'last_name', 'is_active')
+        read_only_fields = ('email', 'is_active')

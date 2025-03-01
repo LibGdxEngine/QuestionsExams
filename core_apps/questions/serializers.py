@@ -114,7 +114,7 @@ class ExamJourneyListSerializerV2(serializers.ModelSerializer):
 
     class Meta:
         model = ExamJourney
-        fields = ['id', 'type', 'created_at', 'time_left', 'progress','questions', 'first_question']
+        fields = ['id', 'type', 'created_at', 'time_left', 'progress', 'questions', 'first_question']
 
     def get_questions(self, obj):
         # Return the count of related Question objects
@@ -156,6 +156,7 @@ class ExamJourneyListSerializerV2(serializers.ModelSerializer):
             }
 
         return None  # If index is out of range
+
 
 class ExamJourneyDetailsSerializerV2(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)

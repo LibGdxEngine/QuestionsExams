@@ -35,7 +35,7 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-    
+
 ]
 
 THIRD_PARTY_APPS = [
@@ -53,8 +53,7 @@ THIRD_PARTY_APPS = [
     "django_extensions",
     "social_django",
     "import_export",
-    # "dj_rest_auth",
-    # "dj_rest_auth.registration",
+
 ]
 
 LOCAL_APPS = [
@@ -71,6 +70,10 @@ LOCAL_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.apple',
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -111,37 +114,28 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000  # Increase the limit
 # Tell allauth to use email as the primary identifier
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None  # ✅ Disables username
 ACCOUNT_AUTHENTICATION_METHOD = "email"
-ACCOUNT_USERNAME_REQUIRED = False  
+ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "optional"
 
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_EMAIL_REQUIRED = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
-
 SOCIAL_AUTH_GOOGLE_OAUTH2_USE_DEPRECATED_API = True
 SOCIAL_AUTH_GOOGLE_PLUS_USE_DEPRECATED_API = True
 # Add your social auth keys
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = "527835727909-ih4vr6ofhac8jvv6k252hq4llk1plv9b.apps.googleusercontent.com"
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = "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"
-SOCIAL_AUTH_FACEBOOK_KEY = "<your-facebook-app-id>"
-SOCIAL_AUTH_FACEBOOK_SECRET = "<your-facebook-app-secret>"
-
-SOCIAL_AUTH_APPLE_ID_CLIENT = "<your-apple-client-id>"
-SOCIAL_AUTH_APPLE_ID_TEAM = "<your-apple-team-id>"
-SOCIAL_AUTH_APPLE_ID_KEY = "<your-apple-key-id>"
-SOCIAL_AUTH_APPLE_ID_SECRET = "<your-apple-key-secret>"
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = "794210030409-1jblj5njdfsn27qnjv0nk326fm0o5oi6.apps.googleusercontent.com"
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = "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"
 
 SOCIAL_AUTH_JSONFIELD_ENABLED = True
 SOCIAL_AUTH_REQUIRE_POST = True
 # Configure the URL for the frontend app
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/"
-ALLOWED_HOSTS = ["krokplus.com", "localhost", "127.0.0.1","app.krokplus.com"]
+ALLOWED_HOSTS = ["krokplus.com", "localhost", "127.0.0.1", "app.krokplus.com"]
 DDOS_REQUEST_THRESHOLD = (
     100  # Maximum number of requests allowed within the time window
 )
 DDOS_TIME_WINDOW = 60  # Time window in seconds
-
+SOCIALACCOUNT_ADAPTER = 'core_apps.users.adapters.CustomSocialAccountAdapter'
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -269,9 +263,17 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
-        # "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+# DJ Rest Auth settings
+REST_AUTH = {
+    'USE_JWT': False,
+    'JWT_AUTH_COOKIE': 'auth-token',
+    'JWT_AUTH_REFRESH_COOKIE': 'refresh-token',
+    'USER_DETAILS_SERIALIZER': 'core_apps.users.serializers.CustomUserDetailsSerializer',
 }
 
 # Configure Simple JWT
@@ -285,10 +287,6 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),  # Ensure token type is "Bearer"
 }
 REST_USE_JWT = True
-
-
-
-
 
 SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
@@ -355,9 +353,7 @@ LOGGING = {
     },
 }
 
-
 # Social Auth settings
-SOCIAL_AUTH_JSONFIELD_ENABLED = True
 SOCIAL_AUTH_URL_NAMESPACE = "social"
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = "https://krokplus.com/"
 SOCIAL_AUTH_LOGIN_ERROR_URL = "/login-error/"
@@ -371,10 +367,3 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
 # Additional settings for Facebook
 SOCIAL_AUTH_FACEBOOK_SCOPE = ["email"]
 SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {"fields": "id,name,email"}
-
-# JWT settings if you're using JWT tokens
-SIMPLE_JWT = {
-    "AUTH_HEADER_TYPES": ("JWT",),
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-}

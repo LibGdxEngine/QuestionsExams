@@ -7,6 +7,27 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 
 from django.contrib.auth import get_user_model
+from allauth.socialaccount.models import SocialApp
+from allauth.account import app_settings as account_settings
+from allauth.account.adapter import DefaultAccountAdapter
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from django.core.exceptions import MultipleObjectsReturned
+
+class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
+    def get_app(self, request, provider, client_id=None):
+        try:
+            return super().get_app(request, provider, client_id)
+        except MultipleObjectsReturned:
+            # Get the first app for this provider
+            if client_id:
+                app = SocialApp.objects.filter(provider=provider.id, client_id=client_id).first()
+            else:
+                app = SocialApp.objects.filter(provider=provider.id).first()
+
+            if app:
+                return app
+            raise  # Re-raise if no app was found
+
 class CustomAccountAdapter(DefaultAccountAdapter):
     def _uidb36(self, user):
         """

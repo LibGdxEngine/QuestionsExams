@@ -302,19 +302,23 @@ class PasswordResetViewSet(viewsets.ViewSet):
             )
 
 
-# from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-# from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
-# from allauth.socialaccount.providers.apple.views import AppleOAuth2Adapter
-# from dj_rest_auth.registration.views import SocialLoginView
+from dj_rest_auth.registration.views import SocialLoginView
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+from allauth.socialaccount.providers.apple.views import AppleOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 
+class GoogleLoginView(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    callback_url = "http://localhost:3000/auth/google/callback"
+    client_class = OAuth2Client
 
-# class GoogleLogin(SocialLoginView):
-#     adapter_class = GoogleOAuth2Adapter
-#
-#
-# class FacebookLogin(SocialLoginView):
-#     adapter_class = FacebookOAuth2Adapter
-#
-#
-# class AppleLogin(SocialLoginView):
-#     adapter_class = AppleOAuth2Adapter
+class FacebookLoginView(SocialLoginView):
+    adapter_class = FacebookOAuth2Adapter
+    callback_url = "http://localhost:3000/auth/facebook/callback"
+    client_class = OAuth2Client
+
+class AppleLoginView(SocialLoginView):
+    adapter_class = AppleOAuth2Adapter
+    callback_url = "http://localhost:3000/auth/apple/callback"
+    client_class = OAuth2Client

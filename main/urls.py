@@ -7,7 +7,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from django.conf.urls.static import static
 
-from core_apps.users.views import health_check
+from core_apps.users.views import health_check, GoogleLoginView, FacebookLoginView, AppleLoginView
 
 env = environ.Env()
 
@@ -58,11 +58,11 @@ urlpatterns = [
                   path("api/v1/elastic/", include("core_apps.search.urls")),
                   path("api/v1/questions/", include("core_apps.questions.urls")),
                   path("api/v2/questions/", include("core_apps.questions.urls_v2")),
-                  # path("auth/", include("dj_rest_auth.urls")),
-                  # path("auth/registration/", include("dj_rest_auth.registration.urls")),
-                  # path("auth/google/", GoogleLogin.as_view(), name="google_login"),
-                  # path("auth/facebook/", FacebookLogin.as_view(), name="facebook_login"),
-                  # path("auth/apple/", AppleLogin.as_view(), name="apple_login")
+                  path("auth/", include("dj_rest_auth.urls")),
+                  path("auth/registration/", include("dj_rest_auth.registration.urls")),
+                  path("api/auth/google/", GoogleLoginView.as_view(), name="google_login"),
+                  path("api/auth/facebook/", FacebookLoginView.as_view(), name="facebook_login"),
+                  path("api/auth/apple/", AppleLoginView.as_view(), name="apple_login")
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 admin.site.site_header = "{} Admin Panel".format(app_name)

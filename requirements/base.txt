@@ -25,3 +25,5 @@ django_extensions
 social-auth-app-django==5.4.1
 django-allauth
 pandas
+dj-rest-auth
+djangorestframework-simplejwt
