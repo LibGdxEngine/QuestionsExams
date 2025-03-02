@@ -32,8 +32,10 @@ DEFAULT_FROM_EMAIL = 'krokplus313@gmail.com'
 DOMAIN = env("DOMAIN", default="")
 SITE_NAME = "Krok plus"
 
-CORS_ALLOW_CREDENTIALS = True
 SESSION_COOKIE_SECURE = False  # Set True in production
 CSRF_COOKIE_SECURE = False  # Set True in production
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
+
+CORS_ALLOW_ALL_ORIGINS = True  # For development, restrict in production
+CORS_ALLOW_CREDENTIALS = True

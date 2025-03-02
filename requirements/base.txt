@@ -27,3 +27,6 @@ django-allauth
 pandas
 dj-rest-auth
 djangorestframework-simplejwt
+google-auth
+google-auth-oauthlib
+google-auth-httplib2

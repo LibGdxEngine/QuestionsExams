@@ -60,7 +60,8 @@ urlpatterns = [
                   path("api/v2/questions/", include("core_apps.questions.urls_v2")),
                   path("auth/", include("dj_rest_auth.urls")),
                   path("auth/registration/", include("dj_rest_auth.registration.urls")),
-                  path("api/auth/google/", GoogleLoginView.as_view(), name="google_login"),
+                  path('api/auth/google/', GoogleLoginView.as_view(), name='google_login'),
+                  # path("api/auth/google/", GoogleLoginView.as_view(), name="google_login"),
                   path("api/auth/facebook/", FacebookLoginView.as_view(), name="facebook_login"),
                   path("api/auth/apple/", AppleLoginView.as_view(), name="apple_login")
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

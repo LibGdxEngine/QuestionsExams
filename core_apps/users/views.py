@@ -79,7 +79,7 @@ class ActivateUser(APIView):
     """View to activate the user once they click the activation link"""
 
     def get(self, request):
-        base_url = "https://krok-plus.com/"
+        frontend_url = "https://krokplus.com/account-activated"
         code = request.GET.get('code')
         activation_code_instance = ActivationCode.objects.filter(activation_code=code).first()
         if activation_code_instance:
@@ -96,11 +96,9 @@ class ActivateUser(APIView):
                 "message": "Account activated successfully. You can now log in.",
                 "activated": "true",
             }
-            return Response(params, status=status.HTTP_201_CREATED)
+            return redirect(f"{frontend_url}?status=success")
 
-        # Failed activation
-        params = {"error": "Invalid activation link", "activated": "false"}
-        return Response(params, status=status.HTTP_201_CREATED)
+        return redirect(f"{frontend_url}?status=error&message=Invalid+activation+link")
 
 
 class CreateAuthTokenView(ObtainAuthToken):
@@ -263,7 +261,7 @@ class PasswordResetViewSet(viewsets.ViewSet):
                         status=status.HTTP_200_OK,
                     )
                 except Exception as e:
-                    logger.error(f"Failed to send password reset email: {str(e)}")
+                    # logger.error(f"Failed to send password reset email: {str(e)}")
                     return Response(
                         {"error": "Failed to send password reset email."},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -308,15 +306,79 @@ from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from allauth.socialaccount.providers.apple.views import AppleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 
-class GoogleLoginView(SocialLoginView):
-    adapter_class = GoogleOAuth2Adapter
-    callback_url = "http://localhost:3000/auth/google/callback"
-    client_class = OAuth2Client
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
+from social_django.utils import load_strategy, load_backend
+from social_core.exceptions import MissingBackend, AuthTokenError, AuthForbidden
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token as google_id_token
+from rest_framework.authtoken.models import Token
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_requests
+
+
+class GoogleLoginView(APIView):
+    def post(self, request):
+        try:
+            access_token = request.data.get('access_token')
+            id_token_str = request.data.get('id_token')
+
+            if not access_token or not id_token_str:
+                return Response({'error': 'Missing tokens'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Verify ID token with Google
+            google_info = google_id_token.verify_oauth2_token(
+                id_token_str,
+                google_requests.Request(),
+                "794210030409-1jblj5njdfsn27qnjv0nk326fm0o5oi6.apps.googleusercontent.com",
+                clock_skew_in_seconds=10800
+            )
+
+            email = google_info.get("email")
+            first_name = google_info.get("given_name", "Default")
+            last_name = google_info.get("family_name", "User")
+
+            # Check if user exists, else create one
+            user, created = User.objects.get_or_create(email=email, defaults={
+                "first_name": first_name,
+                "last_name": last_name,
+            })
+
+            if created:
+                user.is_active = True
+                user.set_unusable_password()  # No password required for social login
+                user.save()
+
+            # Get or create a standard DRF token
+            token, _ = Token.objects.get_or_create(user=user)
+            print({
+                'token': token.key,
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'name': f"{user.first_name} {user.last_name}",
+                }
+            })
+            return Response({
+                'token': token.key,
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'name': f"{user.first_name} {user.last_name}",
+                }
+            }, status=status.HTTP_200_OK)
+
+        except ValueError as e:
+            return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class FacebookLoginView(SocialLoginView):
     adapter_class = FacebookOAuth2Adapter
     callback_url = "http://localhost:3000/auth/facebook/callback"
     client_class = OAuth2Client
+
 
 class AppleLoginView(SocialLoginView):
     adapter_class = AppleOAuth2Adapter
