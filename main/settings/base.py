@@ -153,7 +153,7 @@ MIDDLEWARE = [
     # "main.middleware.LogResponseMiddleware",
     "core_apps.users.middleware.DDosMiddleware",
     # TODO: comment out this line in production
-    # "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "social_django.middleware.SocialAuthExceptionMiddleware",
@@ -237,7 +237,7 @@ STATIC_ROOT = str(ROOT_DIR / "staticfiles")
 MEDIA_URL = "/mediafiles/"
 MEDIA_ROOT = str(ROOT_DIR / "mediafiles")
 # TODO: comment out this line in production
-# STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 
 # Default primary key field type

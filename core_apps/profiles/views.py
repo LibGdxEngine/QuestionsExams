@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.response import Response
 from rest_framework.views import APIView
 # TODO: change this in production
-from main.settings.local import DEFAULT_FROM_EMAIL
+from main.settings.production import DEFAULT_FROM_EMAIL
 
 from .exceptions import CantFollowYourSelfException
 from .models import Profile
