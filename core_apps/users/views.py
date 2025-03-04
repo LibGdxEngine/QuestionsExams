@@ -346,10 +346,9 @@ class GoogleLoginView(APIView):
                 "last_name": last_name,
             })
 
-            if created:
-                user.is_active = True
-                user.set_unusable_password()  # No password required for social login
-                user.save()
+            user.is_active = True
+            user.set_unusable_password()  # No password required for social login
+            user.save()
 
             # Get or create a standard DRF token
             token, _ = Token.objects.get_or_create(user=user)
