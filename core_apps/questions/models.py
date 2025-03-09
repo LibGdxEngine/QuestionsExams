@@ -262,9 +262,9 @@ class HomePage(models.Model):
 
 class FAQ(models.Model):
     faq = models.CharField("faq", max_length=255)
-    faq_uk = models.CharField("faq_uk", max_length=255)
+    faq_uk = models.CharField("faq_uk", max_length=255, default="")
     answer = models.TextField("Answer")
-    answer_uk = models.TextField("Answer_uk")
+    answer_uk = models.TextField("Answer_uk", default="")
     order = models.PositiveIntegerField("Display Order", default=0)
 
     def __str__(self):
