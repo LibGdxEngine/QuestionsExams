@@ -417,4 +417,4 @@ class HomePageSerializer(serializers.ModelSerializer):
 class FAQSerializer(serializers.ModelSerializer):
     class Meta:
         model = FAQ
-        fields = ["faq", "answer"]
+        fields = ["faq", "answer", "faq_uk", "answer_uk"]
