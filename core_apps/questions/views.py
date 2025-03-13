@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import ListView
-from rest_framework import status, authentication
+from rest_framework import status, authentication, generics, permissions
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView
 from rest_framework.response import Response
@@ -522,37 +522,58 @@ class QuestionCountView(APIView):
         return Response({"count": count}, status=status.HTTP_200_OK)
 
 
-class QuestionSearchView(ListView):
-    model = Question
-    context_object_name = "questions"
+class QuestionSearchAPIView(generics.ListAPIView):
+    serializer_class = QuestionSerializer
     authentication_classes = [authentication.TokenAuthentication]
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        search_term = self.request.GET.get("q", "")
-        if search_term:
-            queryset = Question.objects.filter(
+        search_term = self.request.GET.get("q", "").strip()
+        if not search_term:
+            return Question.objects.none()
+
+        return (
+            Question.objects.filter(
                 Q(text__icontains=search_term)
                 | Q(q_answers__answer_text__icontains=search_term)
-            ).distinct()
-        else:
-            queryset = Question.objects.none()
-        return queryset
+                | Q(correct_answer__answer_text__icontains=search_term)
+            )
+            .distinct()
+            .select_related("language", "specificity", "level", "correct_answer")
+            .prefetch_related("years", "subjects", "systems", "topics", "q_answers")
+        )
 
-    def render_to_response(self, context, **response_kwargs):
-        questions = context["questions"]
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        search_term = request.GET.get("q", "").strip()
         results = []
-        for question in questions:
+
+        for question in queryset:
+            match_source = []
+            if search_term.lower() in question.text.lower():
+                match_source.append("question_text")
+
+            matched_answers = []
+            all_answers = []
+            for answer in  question.q_answers.all():
+                if search_term.lower() in answer.answer_text.lower():
+                    answer_type = "correct_answer" if answer == question.correct_answer else "answer"
+                    matched_answers.append(
+                        {"id": answer.id, "text": answer.answer_text, "type": answer_type}
+                    )
+                    match_source.append(answer_type)
+                # Include in all answer options
+                all_answers.append(
+                    {"id": answer.id, "text": answer.answer_text}
+                )
             results.append(
                 {
                     "id": question.id,
                     "text": question.text,
-                    "hint": question.hint,
-                    "video_hint": question.video_hint,
-                    "is_used": question.is_used,
-                    "is_correct": question.is_correct,
-                    "answers": list(question.q_answers.values("id", "answer_text")),
-                    "correct_answer": str(question.correct_answer),
+                    "match_source": list(set(match_source)),
+                    "all_answers": all_answers,
+                    "correct_answer": question.correct_answer.answer_text,
+                    "matched_answers": matched_answers,
                     "language": question.language.name,
                     "specificity": question.specificity.name,
                     "level": question.level.name,
@@ -562,8 +583,8 @@ class QuestionSearchView(ListView):
                     "topics": [topic.name for topic in question.topics.all()],
                 }
             )
-        return JsonResponse({"results": results})
 
+        return Response({"results": results})
 
 class ReportView(CreateAPIView):
     queryset = Report.objects.all()
