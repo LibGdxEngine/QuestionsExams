@@ -17,7 +17,8 @@ from social_core.exceptions import MissingBackend
 from social_django.utils import load_strategy, load_backend
 from social_core.backends.oauth import BaseOAuth2
 from django.contrib.auth import get_user_model, login
-from core_apps.questions.models import Question
+from core_apps.questions.models import Question, QuestionAnswer, Language, Topic, System, Subject, Specificity, Level, \
+    Year
 from core_apps.users.models import ActivationCode
 from core_apps.users.serializers import UserSerializer, AuthTokenSerializer, PasswordResetSerializer, \
     PasswordResetConfirmSerializer
@@ -176,6 +177,14 @@ class CleanupDatabaseAPIView(APIView):
         if key == CLEANUP_KEY:
             try:
                 Question.objects.all().delete()
+                QuestionAnswer.objects.all().delete()
+                Language.objects.all().delete()
+                Topic.objects.all().delete()
+                System.objects.all().delete()
+                Subject.objects.all().delete()
+                Year.objects.all().delete()
+                Specificity.objects.all().delete()
+                Level.objects.all().delete()
                 return Response({"message": "Database cleanup successful."}, status=status.HTTP_200_OK)
             except Exception as e:
                 return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
