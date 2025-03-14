@@ -93,6 +93,11 @@ class QuestionSerializer(serializers.ModelSerializer):
         exclude = ["correct_answer", "years", "subjects", "systems", "topics", "level", "specificity",
                    "language"]  # Exclude correct_answer from fields
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if "answers" in data:
+            random.shuffle(data["answers"])  # Shuffle the answers list
+        return data
 
 class FavoriteListSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
