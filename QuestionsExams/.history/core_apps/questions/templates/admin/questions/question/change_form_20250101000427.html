@@ -1,0 +1,61 @@
+{% extends "admin/change_form.html" %}
+{% load admin_urls static %}
+
+{% block content %}
+  <h1>{{ original }}</h1>
+  <form method="post" enctype="multipart/form-data" action="">
+      {% csrf_token %}
+      <div class="form-row">
+          {% for fieldset in adminform %}
+              <fieldset class="module aligned">
+                  {% if fieldset.name %}
+                      <h2>{{ fieldset.name }}</h2>
+                  {% endif %}
+                  <div class="form-row">
+                      {% for line in fieldset %}
+                          {% for field in line %}
+                              <div class="field-box">
+                                  {{ field.errors }}
+                                  {{ field.label_tag }} {{ field.field }}
+                                  {% if field.help_text %}
+                                      <p class="help">{{ field.help_text|safe }}</p>
+                                  {% endif %}
+                              </div>
+                          {% endfor %}
+                      {% endfor %}
+                  </div>
+              </fieldset>
+          {% endfor %}
+      </div>
+      <h2>Question Answers</h2>
+      <button type="button" onclick="window.open('{% url 'admin:add_answer_popup' %}?question_id={{ original.id }}', 'Add Answer', 'width=600,height=400');">Add Answer</button>
+      {% for inline_admin_formset in inline_admin_formsets %}
+          <div class="inline-group" id="{{ inline_admin_formset.opts.verbose_name }}-group">
+              <h2>{{ inline_admin_formset.opts.verbose_name }}</h2>
+              {{ inline_admin_formset.management_form }}
+              {% for inline_admin_form in inline_admin_formset %}
+                  <div class="inline-related">
+                      <fieldset class="module aligned">
+                          {% for fieldset in inline_admin_form %}
+                              {% for line in fieldset %}
+                                  {% for field in line %}
+                                      <div class="field-box">
+                                          {{ field.errors }}
+                                          {{ field.label_tag }} {{ field.field }}
+                                          {% if field.help_text %}
+                                              <p class="help">{{ field.help_text|safe }}</p>
+                                          {% endif %}
+                                      </div>
+                                  {% endfor %}
+                              {% endfor %}
+                          {% endfor %}
+                      </fieldset>
+                  </div>
+              {% endfor %}
+          </div>
+      {% endfor %}
+      <div class="submit-row">
+          <input type="submit" value="Save" class="default" name="_save">
+      </div>
+  </form>
+{% endblock %}

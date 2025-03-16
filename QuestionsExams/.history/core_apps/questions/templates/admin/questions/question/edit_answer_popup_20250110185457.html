@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Answer</title>
+    <link rel="stylesheet" href="{% static 'admin/css/forms.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/css/widgets.css' %}">
+    <style>
+        body { margin: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .form-row { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        input[type="submit"] { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        input[type="submit"]:hover { background-color: #45a049; }
+    </style>
+</head>
+<body>
+    <h1>Edit Answer</h1>
+    <form method="post" id="edit-answer-form">
+        {% csrf_token %}
+        <div class="form-row">
+            <label for="id_answer_text">Answer Text:</label>
+            <input type="text" name="answer_text" id="id_answer_text" value="{{ question_answer.answer_text }}" required>
+        </div>
+        <div class="form-row">
+            <label for="id_image">Image:</label>
+            <input type="file" name="image" id="id_image">
+            {% if question_answer.image %}
+                <img src="{{ question_answer.image.url }}" width="100" height="100" style="margin: 10px 0;" />
+            {% endif %}
+        </div>
+        <div class="form-row">
+            <input type="submit" value="Update Answer">
+        </div>
+        <div id="feedback" class="feedback"></div>
+    </form>
+    <script>
+        document.getElementById('edit-answer-form').onsubmit = function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            fetch("{% url 'admin:edit_answer' question_answer.id %}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            }).then(response => response.json())
+              .then(data => {
+                  const feedback = document.getElementById('feedback');
+                  feedback.textContent = data.message;
+                  feedback.className = 'feedback ' + (data.success ? 'success' : 'error');
+                  if (data.success) {
+                      setTimeout(() => {
+                          window.close();
+                          window.opener.location.reload();
+                      }, 1000);
+                  }
+              });
+        };
+    </script>
+</body>
+</html> 

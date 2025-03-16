@@ -1,0 +1,8 @@
+{% for question in questions %}
+    <form method="post" action="{% url 'confirm_question' question.id %}">
+        {% csrf_token %}
+        <input type="text" name="text" value="{{ question.text }}">
+        <!-- Add other fields as necessary -->
+        <input type="submit" value="Confirm">
+    </form>
+{% endfor %} 

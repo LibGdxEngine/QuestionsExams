@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Questions</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <div class="container py-4">
+        <button type="button" class="btn btn-success mb-3" onclick="openSaveModal()">
+            Save Questions
+        </button>
+        <!-- Existing content -->
+    </div>
+
+    <!-- Save Questions Modal -->
+    <div class="modal fade" id="saveModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Save Questions</h5>
+                    <button type="button" class="btn-close" onclick="closeSaveModal()"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="saveForm">
+                        <div class="mb-3">
+                            <label class="form-label">Select Options:</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="withAnswers" checked>
+                                <label class="form-check-label" for="withAnswers">
+                                    Save questions with answers only
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="withLanguage" checked>
+                                <label class="form-check-label" for="withLanguage">
+                                    Save questions with language
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="withYear" checked>
+                                <label class="form-check-label" for="withYear">
+                                    Save questions with year
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="withSpecificity" checked>
+                                <label class="form-check-label" for="withSpecificity">
+                                    Save questions with specificity
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="withLevel" checked>
+                                <label class="form-check-label" for="withLevel">
+                                    Save questions with level
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="withSystem" checked>
+                                <label class="form-check-label" for="withSystem">
+                                    Save questions with system
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="withTopic" checked>
+                                <label class="form-check-label" for="withTopic">
+                                    Save questions with topic
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <p>Total questions to save: <span id="questionCount">0</span></p>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeSaveModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveSelectedQuestions()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openSaveModal() {
+            updateQuestionCount();
+            const saveModal = new bootstrap.Modal(document.getElementById('saveModal'));
+            saveModal.show();
+        }
+
+        function closeSaveModal() {
+            const saveModal = bootstrap.Modal.getInstance(document.getElementById('saveModal'));
+            saveModal.hide();
+        }
+
+        function updateQuestionCount() {
+            let count = 0;
+            if (document.getElementById('withAnswers').checked) {
+                count += {{ questions_with_answers_count }};
+            }
+            if (document.getElementById('withLanguage').checked) {
+                count += {{ questions_with_language_count }};
+            }
+            if (document.getElementById('withYear').checked) {
+                count += {{ questions_with_year_count }};
+            }
+            if (document.getElementById('withSpecificity').checked) {
+                count += {{ questions_with_specificity_count }};
+            }
+            if (document.getElementById('withLevel').checked) {
+                count += {{ questions_with_level_count }};
+            }
+            if (document.getElementById('withSystem').checked) {
+                count += {{ questions_with_system_count }};
+            }
+            if (document.getElementById('withTopic').checked) {
+                count += {{ questions_with_topic_count }};
+            }
+            document.getElementById('questionCount').innerText = count;
+        }
+
+        document.querySelectorAll('.form-check-input').forEach(checkbox => {
+            checkbox.addEventListener('change', updateQuestionCount);
+        });
+
+        document.addEventListener('DOMContentLoaded', updateQuestionCount);
+
+        function saveSelectedQuestions() {
+            const formData = new FormData(document.getElementById('saveForm'));
+            fetch('/api/v1/questions/save-questions/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Questions saved successfully!',
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Error saving questions: ' + data.message,
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error saving questions',
+                });
+            });
+        }
+    </script>
+</body>
+</html> 

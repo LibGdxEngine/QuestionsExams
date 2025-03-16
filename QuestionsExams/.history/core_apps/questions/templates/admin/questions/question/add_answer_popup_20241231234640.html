@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Answer</title>
+    <link rel="stylesheet" href="{% static 'admin/css/forms.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/css/widgets.css' %}">
+    <style>
+        body { margin: 20px; }
+        .form-row { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Add Answer</h1>
+    <form method="post" enctype="multipart/form-data" id="add-answer-form">
+        {% csrf_token %}
+        <div class="form-row">
+            <label for="id_answer_text">Answer Text:</label>
+            <input type="text" name="answer_text" id="id_answer_text" required>
+        </div>
+        <div class="form-row">
+            <label for="id_image">Image:</label>
+            <input type="file" name="image" id="id_image">
+        </div>
+        <div class="form-row">
+            <input type="submit" value="Add Answer">
+        </div>
+    </form>
+    <script>
+        document.getElementById('add-answer-form').onsubmit = function(event) {
+            event.preventDefault();
+            // Handle form submission via AJAX
+            const formData = new FormData(this);
+            fetch("{% url 'admin:add_answer' %}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      window.close();
+                      window.opener.location.reload();
+                  } else {
+                      alert('Error adding answer');
+                  }
+              });
+        };
+    </script>
+</body>
+</html> 

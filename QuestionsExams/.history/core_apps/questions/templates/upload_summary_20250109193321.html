@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Summary</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { margin: 20px; }
+        .summary-container { max-width: 800px; margin: auto; }
+        .stat-card {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .preview-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .preview-button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="summary-container">
+        <h1>Upload Summary</h1>
+        <p>File uploaded at: {{ context.excel_upload.uploaded_at }}</p>
+
+        <div class="stat-card">
+            <h3>Questions</h3>
+            <p class="stat-number">{{ context.total_questions }}</p>
+            <p>Questions without answers: {{ context.questions_without_answers }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Answers</h3>
+            <p class="stat-number">{{ context.total_answers }}</p>
+            <p>Questions with correct answers: {{ context.questions_with_correct_answers }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Languages</h3>
+            <p class="stat-number">{{ context.unique_languages|length }}</p>
+            <ul>
+            {% for lang, count in context.language_stats.items %}
+                <li>{{ lang }}: {{ count }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+
+        <div class="stat-card">
+            <h3>Specificities</h3>
+            <p class="stat-number">{{ context.unique_specificities|length }}</p>
+            <ul>
+            {% for spec, count in context.specificity_stats.items %}
+                <li>{{ spec }}: {{ count }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+
+        <div class="stat-card">
+            <h3>Levels</h3>
+            <p class="stat-number">{{ context.unique_levels|length }}</p>
+            <ul>
+            {% for level, count in context.level_stats.items %}
+                <li>{{ level }}: {{ count }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+
+        <div class="stat-card">
+            <h3>Years</h3>
+            <p class="stat-number">{{ context.unique_years|length }}</p>
+            <ul>
+            {% for year, count in context.year_stats.items %}
+                <li>{{ year }}: {{ count }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+
+        <div class="stat-card">
+            <h3>Subjects</h3>
+            <p class="stat-number">{{ context.unique_subjects|length }}</p>
+            <ul>
+            {% for subject, count in context.subject_stats.items %}
+                <li>{{ subject }}: {{ count }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+
+        <a href="{% url 'questions:preview_questions' context.excel_upload.id %}" class="preview-button">
+            Preview Questions
+        </a>
+    </div>
+</body>
+</html> 

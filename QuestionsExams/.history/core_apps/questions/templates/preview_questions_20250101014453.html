@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Preview Questions</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .filters { 
+            background: #f5f5f5;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .filter-group {
+            margin: 10px 0;
+        }
+        .question-container { margin: 20px; padding: 15px; border: 1px solid #ddd; }
+        .answer-list { margin-left: 20px; }
+        .correct { color: green; }
+        .metadata { color: #666; font-size: 0.9em; }
+        select, input[type="submit"] {
+            padding: 5px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Preview Questions from Upload #{{ excel_upload.id }}</h1>
+    <p>Uploaded at: {{ excel_upload.uploaded_at }}</p>
+
+    <div class="filters">
+        <form method="get">
+            <div class="filter-group">
+                <label>Language:</label>
+                <select name="language">
+                    <option value="">All</option>
+                    {% for lang in languages %}
+                        <option value="{{ lang }}" {% if lang == selected_language %}selected{% endif %}>
+                            {{ lang }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Specificity:</label>
+                <select name="specificity">
+                    <option value="">All</option>
+                    {% for spec in specificities %}
+                        <option value="{{ spec }}" {% if spec == selected_specificity %}selected{% endif %}>
+                            {{ spec }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Level:</label>
+                <select name="level">
+                    <option value="">All</option>
+                    {% for lvl in levels %}
+                        <option value="{{ lvl }}" {% if lvl == selected_level %}selected{% endif %}>
+                            {{ lvl }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Has Answers:</label>
+                <select name="has_answers">
+                    <option value="">All</option>
+                    <option value="yes" {% if has_answers == 'yes' %}selected{% endif %}>Yes</option>
+                    <option value="no" {% if has_answers == 'no' %}selected{% endif %}>No</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Has Correct Answer:</label>
+                <select name="has_correct">
+                    <option value="">All</option>
+                    <option value="yes" {% if has_correct == 'yes' %}selected{% endif %}>Yes</option>
+                    <option value="no" {% if has_correct == 'no' %}selected{% endif %}>No</option>
+                </select>
+            </div>
+
+            <input type="submit" value="Apply Filters">
+        </form>
+    </div>
+
+    <p>Showing {{ questions.count }} questions</p>
+    
+    {% for question in questions %}
+    <div class="question-container">
+        <h3>Question {{ forloop.counter }}</h3>
+        <p><strong>Text:</strong> {{ question.text }}</p>
+        
+        <div class="metadata">
+            <p>Language: {{ question.language }}</p>
+            <p>Specificity: {{ question.specificity }}</p>
+            <p>Level: {{ question.level }}</p>
+            <p>Years: {{ question.years }}</p>
+            <p>Subjects: {{ question.subjects }}</p>
+            <p>Systems: {{ question.systems }}</p>
+            <p>Topics: {{ question.topics }}</p>
+            {% if question.hint %}
+                <p>Hint: {{ question.hint }}</p>
+            {% endif %}
+            {% if question.video_hint %}
+                <p>Video Hint: {{ question.video_hint }}</p>
+            {% endif %}
+        </div>
+
+        <div class="answer-list">
+            <h4>Answers:</h4>
+            {% for answer in question.temp_answers.all %}
+                <p class="{% if answer.is_correct %}correct{% endif %}">
+                    {{ answer.text }} {% if answer.is_correct %}(Correct){% endif %}
+                </p>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</body>
+</html> 

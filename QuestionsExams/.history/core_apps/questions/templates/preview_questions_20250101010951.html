@@ -1,0 +1,16 @@
+{% for question in questions %}
+    <form method="post" action="{% url 'confirm_question' question.id %}">
+        {% csrf_token %}
+        <input type="text" name="text" value="{{ question.text }}">
+        <input type="text" name="language" value="{{ question.language }}">
+        <input type="text" name="specificity" value="{{ question.specificity }}">
+        <input type="text" name="level" value="{{ question.level }}">
+        
+        {% for answer in question.temp_answers.all %}
+            <input type="text" name="answer_{{ answer.id }}" value="{{ answer.text }}">
+            <input type="checkbox" name="is_correct_{{ answer.id }}" {% if answer.is_correct %}checked{% endif %}>
+        {% endfor %}
+        
+        <input type="submit" value="Confirm">
+    </form>
+{% endfor %} 
