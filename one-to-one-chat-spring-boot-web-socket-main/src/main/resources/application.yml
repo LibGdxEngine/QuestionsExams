@@ -1,6 +1,0 @@
-spring:
-  data:
-    mongodb:
-      uri: mongodb://localhost:27017/mydatabase
-server:
-  port: 8088

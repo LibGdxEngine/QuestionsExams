@@ -1,6 +1,0 @@
-POSTGRES_HOST=postgres
-POSTGRES_PORT=5432
-POSTGRES_DB=letaskono_db
-POSTGRES_USER=forallah
-POSTGRES_PASSWORD=forallah1445_
-DATABASE_URL=postgres://forallah:forallah1445_@postgres:5432/letaskono_db
