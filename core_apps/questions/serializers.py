@@ -245,8 +245,9 @@ class ProgressField(serializers.Field):
             # Retrieve the question from the database
             try:
                 question = Question.objects.filter(text=question_data["question_text"]).first()
-                # print(question.q_answers)
-                selected_answer_text = question.q_answers.all()[question_data["answer"]].answer_text
+
+                selected_answer_text = question.q_answers.get(answer_text=question_data["answer"]).answer_text
+
             except Question.DoesNotExist:
                 raise serializers.ValidationError(f"Question with ID {question_id} does not exist.")
 
