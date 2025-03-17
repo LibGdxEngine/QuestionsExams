@@ -79,7 +79,6 @@ LOCAL_APPS = [
     'core_apps.order',
     'core_apps.coupon',
     'core_apps.payments',
-    'core_apps.subscription',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

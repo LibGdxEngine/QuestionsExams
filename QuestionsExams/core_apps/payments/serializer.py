@@ -1,20 +1,22 @@
 from rest_framework import serializers
-from .models import Payment
+from .models import PaymentIntent, Subscription, Plan
+from ..order.models import Order
 
-class PaymentSerializer(serializers.ModelSerializer):
-    stripe_payment_id = serializers.CharField()
+class PaymentIntentSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Payment
-        fields = ['id', 'amount', 'currency', 'status', 'description', 'created_at']
-        read_only_fields = ['id', 'status', 'created_at']
+        model = PaymentIntent
+        fields = ['id', 'stripe_payment_intent_id', 'amount', 'currency', 'status', 'created_at']
+        read_only_fields = ['stripe_payment_intent_id', 'status']
 
-class PaymentIntentSerializer(serializers.Serializer):
-    amount = serializers.DecimalField(max_digits=10, decimal_places=2)
-    currency = serializers.CharField(default='usd', max_length=3)
-    description = serializers.CharField(required=False, allow_blank=True)
-    metadata = serializers.JSONField(required=False)
 
-class PaymentIntentResponseSerializer(serializers.Serializer):
-    client_secret = serializers.CharField()
-    payment_intent_id = serializers.CharField()
-    publishable_key = serializers.CharField()
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscription
+        fields = ['id', 'stripe_subscription_id', 'status', 'current_period_end', 'created_at']
+        read_only_fields = ['stripe_subscription_id', 'status', 'current_period_end']
+
+
+class PlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Plan
+        fields = ['id', 'name', 'price', 'interval', 'description']

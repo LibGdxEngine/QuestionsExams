@@ -69,7 +69,6 @@ urlpatterns = [
                   path('api/v1/', include('core_apps.products.urls')),
                   path('api/v1/', include('core_apps.coupon.urls')),
                   path('api/v1/', include('core_apps.payments.urls')),
-                  path('api/v1/', include('core_apps.subscription.urls'))
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 admin.site.site_header = "{} Admin Panel".format(app_name)
