@@ -17,9 +17,9 @@ services:
     command: /start
     image: krok_api
     restart: always
-    # volumes:
-      # - /srv/letaskono/staticfiles:/app/staticfiles
-      # - /srv/letaskono/mediafiles:/app/mediafiles
+    volumes:
+      - /srv/letaskono/staticfiles:/app/staticfiles
+      - /srv/letaskono/mediafiles:/app/mediafiles
     env_file:
       - ./.envs/.production/.django
       - ./.envs/.production/.postgres
