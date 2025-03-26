@@ -234,7 +234,7 @@ USE_TZ = True
 
 SITE_ID = 1
 
-ADMIN_URL = "supersecret/"
+# ADMIN_URL = "supersecret/"
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
 
 # Static files (CSS, JavaScript, Images)
