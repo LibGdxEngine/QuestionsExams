@@ -240,7 +240,8 @@ ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = "/staticfiles/"
-STATIC_ROOT = str(ROOT_DIR / "staticfiles")
+# STATIC_ROOT = str(ROOT_DIR / "staticfiles")
+STATIC_ROOT = "/staticfiles"
 
 MEDIA_URL = "/mediafiles/"
 MEDIA_ROOT = str(ROOT_DIR / "mediafiles")
