@@ -36,7 +36,7 @@ schema_view = get_schema_view(
 )
 urlpatterns = [
                   path("redoc/", schema_view.with_ui("redoc", cache_timeout=0)),
-                  path(f"{settings.ADMIN_URL}/", admin.site.urls),
+                  path(f"admin/", admin.site.urls),
 
                   path('accounts/', include('allauth.urls')),
                   path(
