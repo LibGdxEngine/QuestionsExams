@@ -53,7 +53,6 @@ def process_excel_file(excel_upload_id):
                         is_correct=(str(i) == str(correct_answer)),
                     )
 
-
         # Mark the upload as processed
         excel_upload.processed = True
         excel_upload.save()
