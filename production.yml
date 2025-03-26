@@ -18,8 +18,8 @@ services:
     image: krok_api
     restart: always
     volumes:
-      - /srv/letaskono/staticfiles:/app/staticfiles
-      - /srv/letaskono/mediafiles:/app/mediafiles
+      # - /srv/letaskono/staticfiles:/app/staticfiles
+      # - /srv/letaskono/mediafiles:/app/mediafiles
     env_file:
       - ./.envs/.production/.django
       - ./.envs/.production/.postgres
@@ -74,8 +74,8 @@ services:
       - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
-      - /srv/letaskono/staticfiles:/srv/letaskono/staticfiles
-      - /srv/letaskono/mediafiles:/srv/letaskono/mediafiles
+      # - /srv/letaskono/staticfiles:/srv/letaskono/staticfiles
+      # - /srv/letaskono/mediafiles:/srv/letaskono/mediafiles
       - /etc/letsencrypt/live/krokplus.com/fullchain.pem:/etc/letsencrypt/live/krokplus.com/fullchain.pem # Mount fullchain.pem
       - /etc/letsencrypt/live/krokplus.com/privkey.pem:/etc/letsencrypt/live/krokplus.com/privkey.pem # Mount privkey.pem
       - /etc/letsencrypt/options-ssl-nginx.conf:/etc/letsencrypt/options-ssl-nginx.conf #Mount options-ssl-nginx.conf
