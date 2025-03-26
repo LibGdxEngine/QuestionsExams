@@ -22,7 +22,7 @@ def process_excel_file(excel_upload_id):
     try:
         excel_upload = ExcelUpload.objects.get(id=excel_upload_id)
         df = pd.read_excel(excel_upload.file)
-
+        
         for index, row in df.iterrows():
             question_data = {
                 "excel_upload": excel_upload,
@@ -40,10 +40,13 @@ def process_excel_file(excel_upload_id):
             question = TempQuestion.objects.create(**question_data)
 
             answers = row.get("answers", "")
+            print("answers", answers, "type", type(answers))
             correct_answer = row.get("correct_answer", "")
+            print(correct_answer, "type", type(correct_answer))
             if pd.notna(answers):
                 answer_list = [a.strip() for a in list(set(answers.split(","))) if a.strip()]
                 for i, answer in enumerate(answer_list):
+                    print("index", i)
                     TempAnswer.objects.create(
                         question=question,
                         text=answer,
