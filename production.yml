@@ -17,7 +17,7 @@ services:
     command: /start
     image: krok_api
     restart: always
-    volumes:
+    # volumes:
       # - /srv/letaskono/staticfiles:/app/staticfiles
       # - /srv/letaskono/mediafiles:/app/mediafiles
     env_file:
