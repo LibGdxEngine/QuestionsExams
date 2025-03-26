@@ -18,9 +18,9 @@ CSRF_TRUSTED_ORIGINS = [
     "https://www.admin.krokplus.com",
     "https://krokplus.com",
     "http://krokplus.com",
+    "https://www.krokplus.com",
     "http://admin.krokplus.com",
     "htts://www.krokplus.com",
-    "https://www.krokplus.com",
     "http://localhost:8000",
     "http://93.127.203.112",
     "http://localhost",
@@ -44,7 +44,7 @@ ADMIN_URL = env("DJANGO_ADMIN_URL", default="y6ph_Wr=s4IB")
 
 DATABASES = {"default": env.db("DATABASE_URL", default="sqlite:///db")}
 
-# SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
 ACCOUNT_ADAPTER = "core_apps.users.adapters.CustomAccountAdapter"
