@@ -19,6 +19,10 @@ import pandas as pd
 
 # @shared_task
 def process_excel_file(excel_upload_id):
+    def unique_order_preserving(items):
+        seen = set()
+        return [x for x in items.split(",") if not (x.strip() in seen or seen.add(x.strip()))]
+
     try:
         excel_upload = ExcelUpload.objects.get(id=excel_upload_id)
         df = pd.read_excel(excel_upload.file)
@@ -44,7 +48,7 @@ def process_excel_file(excel_upload_id):
             correct_answer = row.get("correct_answer", "")
             print(correct_answer, "type", type(correct_answer))
             if pd.notna(answers):
-                answer_list = [a.strip() for a in list(set(answers.split(","))) if a.strip()]
+                answer_list = [a.strip() for a in unique_order_preserving(answers) if a.strip()]
                 print("answer_list", answer_list)
                 for i, answer in enumerate(answer_list):
                     print("index", i)
