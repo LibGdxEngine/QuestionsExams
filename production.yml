@@ -1,0 +1,92 @@
+version: "3.9"
+
+services:
+#  es:
+#    image: elasticsearch:7.17.9
+#    restart: always
+#    environment:
+#      - discovery.type=single-node
+#    ports:
+#      - "9200:9200"
+#    networks:
+#      - reverseproxy_nw
+  api: &api
+    build:
+      context: .
+      dockerfile: ./docker/production/django/Dockerfile
+    command: /start
+    image: krok_api
+    restart: always
+    volumes:
+      - /srv/letaskono/staticfiles:/app/staticfiles
+      - /srv/letaskono/mediafiles:/app/mediafiles
+    env_file:
+      - ./.envs/.production/.django
+      - ./.envs/.production/.postgres
+    depends_on:
+      - postgres
+      - redis
+#      - es
+    networks:
+      - reverseproxy_nw
+  
+  postgres:
+    build:
+      context: .
+      dockerfile: ./docker/production/postgres/Dockerfile
+    image: krok_api_database
+    restart: always
+    volumes:
+      - production_postgres_data:/var/lib/postgresql/data
+      - production_postgres_data_backups:/backups
+    env_file:
+      - ./.envs/.production/.postgres
+    networks:
+      - reverseproxy_nw
+  
+  redis:
+    image: redis:7-alpine
+    networks:
+      - reverseproxy_nw
+    restart: always
+    
+  celery_worker:
+    <<: *api
+    image: krok_api_celery_worker
+    command: /start-celeryworker
+    restart: always
+    networks:
+      - reverseproxy_nw
+  
+  flower:
+    <<: *api
+    image: krok_api_flower
+    command: /start-flower
+    restart: always
+    volumes:
+      - flower_data:/data
+    networks:
+      - reverseproxy_nw
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf
+      - /srv/letaskono/staticfiles:/srv/letaskono/staticfiles
+      - /srv/letaskono/mediafiles:/srv/letaskono/mediafiles
+    networks:
+      - reverseproxy_nw
+    depends_on:
+      - api
+      
+networks:
+  reverseproxy_nw:
+    external: true
+
+volumes:
+  static_volume: { }
+  media_volume: { }
+  production_postgres_data: { }
+  production_postgres_data_backups: { }
+  flower_data: { }

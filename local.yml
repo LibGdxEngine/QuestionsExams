@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app:z
+    ports:
+      - "8020:8020"
+    env_file:
+      - ./.envs/.local/.django
+    depends_on:
+      - redis
+      - postgres
+    command: python manage.py runserver 0.0.0.0:8020
+    networks:
+      - app-network
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app:z
+    env_file:
+      - ./.envs/.local/.django
+    depends_on:
+      - redis
+      - postgres
+    command: celery -A main worker --loglevel=info
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:15-bullseye
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - ./.envs/.local/.postgres
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
