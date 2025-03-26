@@ -40,7 +40,7 @@ ALLOWED_HOSTS = [
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-ADMIN_URL = env("DJANGO_ADMIN_URL", default="y6ph_Wr=s4IB")
+ADMIN_URL = env("DJANGO_ADMIN_URL", default="admin")
 
 DATABASES = {"default": env.db("DATABASE_URL", default="sqlite:///db")}
 
