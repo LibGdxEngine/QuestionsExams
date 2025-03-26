@@ -34,7 +34,7 @@ schema_view = get_schema_view(
     public=True,
     permission_classes=[permissions.AllowAny],
 )
-
+print("ADMIN URL IS", settings.ADMIN_URL)
 urlpatterns = [
                   path("redoc/", schema_view.with_ui("redoc", cache_timeout=0)),
                   path(f"{settings.ADMIN_URL}/", admin.site.urls),
