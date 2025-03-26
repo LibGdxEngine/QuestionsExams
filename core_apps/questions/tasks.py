@@ -45,6 +45,7 @@ def process_excel_file(excel_upload_id):
             print(correct_answer, "type", type(correct_answer))
             if pd.notna(answers):
                 answer_list = [a.strip() for a in list(set(answers.split(","))) if a.strip()]
+                print("answer_list", answer_list)
                 for i, answer in enumerate(answer_list):
                     print("index", i)
                     TempAnswer.objects.create(
