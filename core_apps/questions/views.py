@@ -626,7 +626,7 @@ def upload_excel(request):
         excel_upload = ExcelUpload.objects.create(file=excel_file)
 
         # Trigger the Celery task
-        process_excel_file(excel_upload.id)
+        process_excel_file.delay(excel_upload.id)
 
         return JsonResponse(
             {

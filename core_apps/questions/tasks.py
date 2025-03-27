@@ -44,12 +44,10 @@ def process_excel_file(excel_upload_id):
             question = TempQuestion.objects.create(**question_data)
 
             answers = row.get("answers", "")
-            print("answers", answers, "type", type(answers))
             correct_answer = row.get("correct_answer", "")
-            print(correct_answer, "type", type(correct_answer))
             if pd.notna(answers):
                 answer_list = [a.strip() for a in unique_order_preserving(answers) if a.strip()]
-                print("answer_list", answer_list)
+
                 for i, answer in enumerate(answer_list):
                     print("index", i)
                     TempAnswer.objects.create(
