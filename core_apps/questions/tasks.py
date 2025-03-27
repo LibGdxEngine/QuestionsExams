@@ -17,7 +17,7 @@ from .models import (
 import pandas as pd
 
 
-# @shared_task
+@shared_task
 def process_excel_file(excel_upload_id):
     def unique_order_preserving(items):
         seen = set()
