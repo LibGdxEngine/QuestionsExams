@@ -220,18 +220,18 @@ class ExcelUploadAdmin(admin.ModelAdmin):
     list_filter = ["processed", "uploaded_at"]
 
 
-@admin.register(TempQuestion)
-class TempQuestionAdmin(admin.ModelAdmin):
-    list_display = ["id", "text", "language", "specificity", "level"]
-    list_filter = ["language", "specificity", "level"]
-    search_fields = ["text"]
+# @admin.register(TempQuestion)
+# class TempQuestionAdmin(admin.ModelAdmin):
+#     list_display = ["id", "text", "language", "specificity", "level"]
+#     list_filter = ["language", "specificity", "level"]
+#     search_fields = ["text"]
 
 
-@admin.register(TempAnswer)
-class TempAnswerAdmin(admin.ModelAdmin):
-    list_display = ["id", "question", "text", "is_correct"]
-    list_filter = ["is_correct"]
-    search_fields = ["text"]
+# @admin.register(TempAnswer)
+# class TempAnswerAdmin(admin.ModelAdmin):
+#     list_display = ["id", "question", "text", "is_correct"]
+#     list_filter = ["is_correct"]
+#     search_fields = ["text"]
 
 
 admin.site.register(Language)

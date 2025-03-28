@@ -164,7 +164,23 @@ class ExamJourney(models.Model):
     def __str__(self):
         return f"{self.user} - {self.type}"
 
+class ExamJourneyQuestionOrder(models.Model):
+    exam_journey = models.ForeignKey(
+        'ExamJourney', 
+        related_name='question_orders', 
+        on_delete=models.CASCADE
+    )
+    question = models.ForeignKey(
+        'Question', 
+        on_delete=models.CASCADE
+    )
+    position = models.IntegerField()
 
+    class Meta:
+        unique_together = ['exam_journey', 'position']
+        ordering = ['position']
+        
+        
 class Note(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     question = models.ForeignKey("Question", on_delete=models.CASCADE)

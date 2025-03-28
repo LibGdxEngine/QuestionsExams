@@ -79,21 +79,12 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 class QuestionSerializer(serializers.ModelSerializer):
     answers = AnswerSerializer(many=True, read_only=True, source="q_answers")
-
-    # language = LanguageSerializer(read_only=True)
-    # specificity = LanguageSerializer(read_only=True)
-    # level = LevelSerializer(read_only=True)
-    #
-    # years = YearSerializer(many=True, read_only=True)
-    # subjects = SubjectSerializer(many=True, read_only=True)
-    # systems = SystemSerializer(many=True, read_only=True)
-    # topics = TopicSerializer(many=True, read_only=True)
-
     class Meta:
         model = Question
         exclude = ["correct_answer", "years", "subjects", "systems", "topics", "level", "specificity",
                    "language"]  # Exclude correct_answer from fields
 
+    
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if "answers" in data:
@@ -165,13 +156,27 @@ class ExamJourneyListSerializerV2(serializers.ModelSerializer):
 
 
 class ExamJourneyDetailsSerializerV2(serializers.ModelSerializer):
-    questions = QuestionSerializer(many=True, read_only=True)
+    questions = serializers.SerializerMethodField()
     progress = serializers.SerializerMethodField()
 
     class Meta:
         model = ExamJourney
         fields = "__all__"
-
+        
+    def get_questions(self, obj):
+        # Retrieve questions in their original order using ExamJourneyQuestionOrder
+        question_orders = ExamJourneyQuestionOrder.objects.filter(
+            exam_journey=obj
+        ).order_by('position')
+        
+        # Fetch the questions in the correct order
+        questions = [qo.question for qo in question_orders]
+        
+        # Use the existing QuestionSerializer 
+        # This will maintain the random answer shuffling for each question
+        serializer = QuestionSerializer(questions, many=True)
+        return serializer.data
+    
     def get_progress(self, obj):
         # Assuming that you want to transform the dictionary into a list of values
         # Modify this logic depending on the structure of your progress dictionary
