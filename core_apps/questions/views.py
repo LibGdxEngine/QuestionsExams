@@ -306,6 +306,8 @@ class CreateExamJourneyAPIView(APIView):
             "current_question": 0,
             "progress": {},
             "time_left": None,
+            # Add question order during creation
+            "question_order": [q.id for q in questions]
         }
         
         # Create exam journey with serializer
@@ -320,7 +322,7 @@ class CreateExamJourneyAPIView(APIView):
         # Save exam journey
         exam_journey = exam_journey_serializer.save()
         
-        # Add questions to the exam journey
+        # Add questions to the exam journey AFTER saving
         exam_journey.questions.set(questions)
         
         # Return the created exam journey using the detailed serializer
@@ -328,7 +330,6 @@ class CreateExamJourneyAPIView(APIView):
             ExamJourneyDetailsSerializerV2(exam_journey).data,
             status=status.HTTP_201_CREATED
         )
-
 logger = logging.getLogger("core_apps.questions")
 
 

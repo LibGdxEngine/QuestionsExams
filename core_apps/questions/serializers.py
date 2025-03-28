@@ -162,6 +162,9 @@ class ExamJourneyDetailsSerializerV2(serializers.ModelSerializer):
     class Meta:
         model = ExamJourney
         fields = "__all__"     
+        extra_kwargs = {
+            'question_order': {'required': False}
+        }
           
     def get_questions(self, obj):
         # Retrieve questions in the stored order
