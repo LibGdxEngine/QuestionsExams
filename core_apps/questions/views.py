@@ -260,96 +260,74 @@ class CreateExamJourneyAPIView(APIView):
 
     def post(self, request, *args, **kwargs):
         question_filter_serializer = QuestionFilterSerializer(data=request.data)
-
-        if question_filter_serializer.is_valid():
-            filters = Q()
-
-            # Apply filters based on the input data
-            if "language" in question_filter_serializer.validated_data:
-                filters &= Q(
-                    language_id=question_filter_serializer.validated_data["language"]
-                )
-
-            if "specificity" in question_filter_serializer.validated_data:
-                filters &= Q(
-                    specificity_id=question_filter_serializer.validated_data[
-                        "specificity"
-                    ]
-                )
-            if "level" in question_filter_serializer.validated_data:
-                filters &= Q(
-                    level_id=question_filter_serializer.validated_data["level"]
-                )
-            if "years" in question_filter_serializer.validated_data:
-                filters &= Q(
-                    years__id__in=question_filter_serializer.validated_data["years"]
-                )
-            if "subjects" in question_filter_serializer.validated_data:
-                filters &= Q(
-                    subjects__id__in=question_filter_serializer.validated_data[
-                        "subjects"
-                    ]
-                )
-            if "systems" in question_filter_serializer.validated_data:
-                filters &= Q(
-                    systems__id__in=question_filter_serializer.validated_data["systems"]
-                )
-            if "topics" in question_filter_serializer.validated_data:
-                filters &= Q(
-                    topics__id__in=question_filter_serializer.validated_data["topics"]
-                )
-            number_of_questions = question_filter_serializer.validated_data[
-                "number_of_questions"
-            ]
-            selected_questions = list(Question.objects.filter(filters).distinct())
-            questions = selected_questions[:number_of_questions]
-            if len(questions) < number_of_questions:
-                return Response(
-                    {"error": "Not enough questions available for the given filters"},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            # Randomize the order of the questions
-            random.seed(time.time())
-            # Use random.sample to create a new shuffled list
-            shuffled_questions = random.sample(questions, len(questions))
-
-            # Extract the type field from the validated data
-            journey_type = question_filter_serializer.validated_data["type"]
-
-            exam_journey_data = {
-                "user": request.user.pk,
-                "type": journey_type,
-                "questions": [question.id for question in shuffled_questions],
-                "current_question": 0,
-                "progress": {},
-                "time_left": None,
-            }
-
-            exam_journey_serializer = ExamJourneySerializer(data=exam_journey_data)
-            if exam_journey_serializer.is_valid():
-                exam_journey = exam_journey_serializer.save()
-                question_positions = [
-                    ExamJourneyQuestionOrder.objects.create(
-                        exam_journey=exam_journey, question=question, position=index
-                    )
-                    for index, question in enumerate(questions)
-                ]
-
-                exam_journey.questions.set(questions)
-                return Response(
-                    ExamJourneySerializer(exam_journey).data,
-                    status=status.HTTP_201_CREATED,
-                )
-
+        
+        if not question_filter_serializer.is_valid():
             return Response(
-                exam_journey_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                question_filter_serializer.errors, 
+                status=status.HTTP_400_BAD_REQUEST
             )
-
+        
+        # Prepare filters
+        filters = Q()
+        validated_data = question_filter_serializer.validated_data
+        
+        filter_mapping = {
+            "language": "language_id",
+            "specificity": "specificity_id", 
+            "level": "level_id",
+            "years": "years__id__in",
+            "subjects": "subjects__id__in",
+            "systems": "systems__id__in",
+            "topics": "topics__id__in"
+        }
+        
+        for key, filter_key in filter_mapping.items():
+            if key in validated_data:
+                filters &= Q(**{filter_key: validated_data[key]})
+        
+        # Fetch and validate questions
+        number_of_questions = validated_data["number_of_questions"]
+        selected_questions = list(Question.objects.filter(filters).distinct())
+        
+        if len(selected_questions) < number_of_questions:
+            return Response(
+                {"error": "Not enough questions available for the given filters"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Randomly select questions
+        questions = random.sample(selected_questions, number_of_questions)
+        
+        # Prepare exam journey data
+        journey_type = validated_data["type"]
+        exam_journey_data = {
+            "user": request.user.pk,
+            "type": journey_type,
+            "current_question": 0,
+            "progress": {},
+            "time_left": None,
+        }
+        
+        # Create exam journey with serializer
+        exam_journey_serializer = ExamJourneySerializer(data=exam_journey_data)
+        
+        if not exam_journey_serializer.is_valid():
+            return Response(
+                exam_journey_serializer.errors, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Save exam journey
+        exam_journey = exam_journey_serializer.save()
+        
+        # Add questions to the exam journey
+        exam_journey.questions.set(questions)
+        
+        # Return the created exam journey using the detailed serializer
         return Response(
-            question_filter_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            ExamJourneyDetailsSerializerV2(exam_journey).data,
+            status=status.HTTP_201_CREATED
         )
-
 
 logger = logging.getLogger("core_apps.questions")
 

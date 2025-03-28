@@ -160,26 +160,25 @@ class ExamJourney(models.Model):
     time_left = models.DurationField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    question_order = models.JSONField(default=list)
 
+    def save(self, *args, **kwargs):
+        # If question_order is empty, generate a random order
+        if not self.question_order and self.questions.exists():
+            # Get all question IDs
+            question_ids = list(self.questions.values_list('id', flat=True))
+            
+            # Shuffle the question IDs
+            random.shuffle(question_ids)
+            
+            # Store the shuffled order
+            self.question_order = question_ids
+        
+        super().save(*args, **kwargs)
+        
     def __str__(self):
         return f"{self.user} - {self.type}"
 
-class ExamJourneyQuestionOrder(models.Model):
-    exam_journey = models.ForeignKey(
-        'ExamJourney', 
-        related_name='question_orders', 
-        on_delete=models.CASCADE
-    )
-    question = models.ForeignKey(
-        'Question', 
-        on_delete=models.CASCADE
-    )
-    position = models.IntegerField()
-
-    class Meta:
-        unique_together = ['exam_journey', 'position']
-        ordering = ['position']
-        
         
 class Note(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

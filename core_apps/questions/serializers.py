@@ -161,19 +161,21 @@ class ExamJourneyDetailsSerializerV2(serializers.ModelSerializer):
 
     class Meta:
         model = ExamJourney
-        fields = "__all__"
-        
+        fields = "__all__"     
+          
     def get_questions(self, obj):
-        # Retrieve questions in their original order using ExamJourneyQuestionOrder
-        question_orders = ExamJourneyQuestionOrder.objects.filter(
-            exam_journey=obj
-        ).order_by('position')
+        # Retrieve questions in the stored order
+        questions = Question.objects.filter(
+            id__in=obj.question_order
+        )
         
-        # Fetch the questions in the correct order
-        questions = [qo.question for qo in question_orders]
+        # Maintain the specific order from question_order
+        questions = sorted(
+            questions, 
+            key=lambda q: obj.question_order.index(q.id)
+        )
         
         # Use the existing QuestionSerializer 
-        # This will maintain the random answer shuffling for each question
         serializer = QuestionSerializer(questions, many=True)
         return serializer.data
     
