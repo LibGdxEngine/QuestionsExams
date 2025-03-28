@@ -7,7 +7,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import ListView
 from rest_framework import status, authentication, generics, permissions
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView
+from rest_framework.generics import (
+    CreateAPIView,
+    ListAPIView,
+    RetrieveUpdateDestroyAPIView,
+    UpdateAPIView,
+)
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import viewsets
@@ -255,84 +260,96 @@ class CreateExamJourneyAPIView(APIView):
 
     def post(self, request, *args, **kwargs):
         question_filter_serializer = QuestionFilterSerializer(data=request.data)
-        
-        if not question_filter_serializer.is_valid():
+
+        if question_filter_serializer.is_valid():
+            filters = Q()
+
+            # Apply filters based on the input data
+            if "language" in question_filter_serializer.validated_data:
+                filters &= Q(
+                    language_id=question_filter_serializer.validated_data["language"]
+                )
+
+            if "specificity" in question_filter_serializer.validated_data:
+                filters &= Q(
+                    specificity_id=question_filter_serializer.validated_data[
+                        "specificity"
+                    ]
+                )
+            if "level" in question_filter_serializer.validated_data:
+                filters &= Q(
+                    level_id=question_filter_serializer.validated_data["level"]
+                )
+            if "years" in question_filter_serializer.validated_data:
+                filters &= Q(
+                    years__id__in=question_filter_serializer.validated_data["years"]
+                )
+            if "subjects" in question_filter_serializer.validated_data:
+                filters &= Q(
+                    subjects__id__in=question_filter_serializer.validated_data[
+                        "subjects"
+                    ]
+                )
+            if "systems" in question_filter_serializer.validated_data:
+                filters &= Q(
+                    systems__id__in=question_filter_serializer.validated_data["systems"]
+                )
+            if "topics" in question_filter_serializer.validated_data:
+                filters &= Q(
+                    topics__id__in=question_filter_serializer.validated_data["topics"]
+                )
+            number_of_questions = question_filter_serializer.validated_data[
+                "number_of_questions"
+            ]
+            selected_questions = list(Question.objects.filter(filters).distinct())
+            questions = selected_questions[:number_of_questions]
+            if len(questions) < number_of_questions:
+                return Response(
+                    {"error": "Not enough questions available for the given filters"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Randomize the order of the questions
+            random.seed(time.time())
+            # Use random.sample to create a new shuffled list
+            shuffled_questions = random.sample(questions, len(questions))
+
+            # Extract the type field from the validated data
+            journey_type = question_filter_serializer.validated_data["type"]
+
+            exam_journey_data = {
+                "user": request.user.pk,
+                "type": journey_type,
+                "questions": [question.id for question in shuffled_questions],
+                "current_question": 0,
+                "progress": {},
+                "time_left": None,
+            }
+
+            exam_journey_serializer = ExamJourneySerializer(data=exam_journey_data)
+            if exam_journey_serializer.is_valid():
+                exam_journey = exam_journey_serializer.save()
+                question_positions = [
+                    ExamJourneyQuestionOrder.objects.create(
+                        exam_journey=exam_journey, question=question, position=index
+                    )
+                    for index, question in enumerate(questions)
+                ]
+
+                exam_journey.questions.set(questions)
+                return Response(
+                    ExamJourneySerializer(exam_journey).data,
+                    status=status.HTTP_201_CREATED,
+                )
+
             return Response(
-                question_filter_serializer.errors, 
-                status=status.HTTP_400_BAD_REQUEST
+                exam_journey_serializer.errors, status=status.HTTP_400_BAD_REQUEST
             )
-        
-        # Prepare filters
-        filters = Q()
-        validated_data = question_filter_serializer.validated_data
-        
-        # Dynamic filter application
-        filter_mapping = {
-            "language": "language_id",
-            "specificity": "specificity_id", 
-            "level": "level_id",
-            "years": "years__id__in",
-            "subjects": "subjects__id__in",
-            "systems": "systems__id__in",
-            "topics": "topics__id__in"
-        }
-        
-        for key, filter_key in filter_mapping.items():
-            if key in validated_data:
-                filters &= Q(**{filter_key: validated_data[key]})
-        
-        # Fetch and validate questions
-        number_of_questions = validated_data["number_of_questions"]
-        selected_questions = list(Question.objects.filter(filters).distinct())
-        
-        if len(selected_questions) < number_of_questions:
-            return Response(
-                {"error": "Not enough questions available for the given filters"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Use a consistent seed for reproducibility within the same request
-        random.seed(int(time.time() * 1000))  # Use milliseconds for more unique seed
-        
-        # Randomly select and shuffle questions
-        questions = random.sample(selected_questions, number_of_questions)
-        
-        # Prepare exam journey data
-        journey_type = validated_data["type"]
-        exam_journey_data = {
-            "user": request.user.pk,
-            "type": journey_type,
-            "current_question": 0,
-            "progress": {},
-            "time_left": None,
-        }
-        
-        # Create exam journey with serializer
-        exam_journey_serializer = ExamJourneySerializer(data=exam_journey_data)
-        
-        if not exam_journey_serializer.is_valid():
-            return Response(
-                exam_journey_serializer.errors, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Save exam journey
-        exam_journey = exam_journey_serializer.save()
-        
-        # Create ordered question positions
-        question_positions = [
-            ExamJourneyQuestionOrder.objects.create(
-                exam_journey=exam_journey,
-                question=question,
-                position=index
-            ) for index, question in enumerate(questions)
-        ]
-        
-        # Return the created exam journey
+
         return Response(
-            ExamJourneySerializer(exam_journey).data,
-            status=status.HTTP_201_CREATED
+            question_filter_serializer.errors, status=status.HTTP_400_BAD_REQUEST
         )
+
 
 logger = logging.getLogger("core_apps.questions")
 
@@ -356,21 +373,20 @@ class UpdateExamJourneyAPIView(APIView):
             current_question_is_correct = None
             for question_id, question_status in progress_data.items():
                 try:
-                    question = Question.objects.get(
-                        id=question_status["question_id"]
-                    )
-                    user_question_status, created = (
-                        UserQuestionStatus.objects.get_or_create(
-                            user=request.user,
-                            question=question,
-                            defaults={"is_used": True},
-                        )
+                    question = Question.objects.get(id=question_status["question_id"])
+                    (
+                        user_question_status,
+                        created,
+                    ) = UserQuestionStatus.objects.get_or_create(
+                        user=request.user,
+                        question=question,
+                        defaults={"is_used": True},
                     )
 
                     user_question_status.is_used = True
                     user_question_status.is_correct = (
-                            question.q_answers.all()[question_status["answer"]]
-                            == question.correct_answer
+                        question.q_answers.all()[question_status["answer"]]
+                        == question.correct_answer
                     )
                     user_question_status.save()
 
@@ -378,9 +394,7 @@ class UpdateExamJourneyAPIView(APIView):
                     if question_status["question_text"] == current_question_text:
                         current_question_is_correct = user_question_status.is_correct
 
-
                 except Question.DoesNotExist:
-
                     return Response(
                         {
                             "error": f'Question with text "{question_status["question_text"]}" not found.'
@@ -388,7 +402,6 @@ class UpdateExamJourneyAPIView(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 except Exception as e:
-
                     return Response(
                         {"error": f"Error processing question: {str(e)}"},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -550,17 +563,23 @@ class QuestionSearchAPIView(generics.ListAPIView):
 
             matched_answers = []
             all_answers = []
-            for answer in  question.q_answers.all():
+            for answer in question.q_answers.all():
                 if search_term.lower() in answer.answer_text.lower():
-                    answer_type = "correct_answer" if answer == question.correct_answer else "answer"
+                    answer_type = (
+                        "correct_answer"
+                        if answer == question.correct_answer
+                        else "answer"
+                    )
                     matched_answers.append(
-                        {"id": answer.id, "text": answer.answer_text, "type": answer_type}
+                        {
+                            "id": answer.id,
+                            "text": answer.answer_text,
+                            "type": answer_type,
+                        }
                     )
                     match_source.append(answer_type)
                 # Include in all answer options
-                all_answers.append(
-                    {"id": answer.id, "text": answer.answer_text}
-                )
+                all_answers.append({"id": answer.id, "text": answer.answer_text})
             results.append(
                 {
                     "id": question.id,
@@ -580,6 +599,7 @@ class QuestionSearchAPIView(generics.ListAPIView):
             )
 
         return Response({"results": results})
+
 
 class ReportView(CreateAPIView):
     queryset = Report.objects.all()
@@ -882,8 +902,8 @@ def get_page_range(paginator, current_page, show_adjacent=2):
 
     # Add pages around current page
     for page_num in range(
-            max(2, current_page - show_adjacent),
-            min(total_pages, current_page + show_adjacent + 1),
+        max(2, current_page - show_adjacent),
+        min(total_pages, current_page + show_adjacent + 1),
     ):
         if page_range[-1] != page_num - 1:
             page_range.append("...")
@@ -994,7 +1014,7 @@ def update_temp_question(request, question_id):
                             text=new_answer_text,
                             image=new_answer_image,
                             is_correct=(
-                                    correct_answer == key.replace("new_answer_", "new_")
+                                correct_answer == key.replace("new_answer_", "new_")
                             ),
                         )
 
@@ -1121,6 +1141,6 @@ class HomePageAPIView(APIView):
 
         data = {
             "video_url": home_page.video_url if home_page else None,
-            "faqs": FAQSerializer(faqs, many=True).data
+            "faqs": FAQSerializer(faqs, many=True).data,
         }
         return Response(data)
