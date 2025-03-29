@@ -9,6 +9,7 @@ from core_apps.products.models import Product
 # generics
 class CartViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
     serializer_class = CartSerializer
 
     def get_queryset(self):

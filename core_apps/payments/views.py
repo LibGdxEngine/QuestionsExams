@@ -20,6 +20,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class CreateCheckoutSessionView(APIView):
     permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
 
     def post(self, request, *args, **kwargs):
         try:
@@ -102,6 +103,7 @@ class CreateCheckoutSessionView(APIView):
 
 class CreateSubscriptionCheckoutView(APIView):
     permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
 
     def post(self, request, *args, **kwargs):
         try:
@@ -144,6 +146,7 @@ class CreateSubscriptionCheckoutView(APIView):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
 def payment_success(request):
     session_id = request.GET.get('session_id')
 
@@ -185,6 +188,7 @@ def payment_success(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
 def subscription_success(request):
     # Handle successful subscription
     session_id = request.GET.get('session_id')
@@ -312,6 +316,7 @@ class PlanViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Plan.objects.all()
     serializer_class = PlanSerializer
     permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
 
 
 class UserSubscriptionView(APIView):
@@ -319,7 +324,7 @@ class UserSubscriptionView(APIView):
     API endpoint for viewing user's subscription
     """
     permission_classes = [IsAuthenticated]
-
+    authentication_classes = [TokenAuthentication]
     def get(self, request):
         try:
             subscription = Subscription.objects.filter(user=request.user, status='active').first()
