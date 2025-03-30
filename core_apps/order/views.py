@@ -14,8 +14,8 @@ from ..coupon.models import Coupon
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    # authentication_classes = (authentication.TokenAuthentication,)
-    permission_classes = [permissions.AllowAny]
+    authentication_classes = (authentication.TokenAuthentication,)
+    permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         """POST: Create an order from the cart"""
