@@ -5,7 +5,6 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework import authentication, permissions
 from rest_framework.response import Response
 from rest_framework import viewsets
-
 from .models import Order
 from .serializers import OrderSerializer
 from .services import create_order_from_cart
@@ -15,8 +14,8 @@ from ..coupon.models import Coupon
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    authentication_classes = (authentication.TokenAuthentication,)
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    # authentication_classes = (authentication.TokenAuthentication,)
+    permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
         """POST: Create an order from the cart"""
