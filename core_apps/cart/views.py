@@ -3,15 +3,16 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import authentication, permissions
 from .models import Cart, CartItem
 from .serializers import CartSerializer, CartItemSerializer, AddToCartSerializer
 from core_apps.products.models import Product
 
 # generics
 class CartViewSet(viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [TokenAuthentication]
     serializer_class = CartSerializer
+    authentication_classes = (authentication.TokenAuthentication,)
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         return Cart.objects.filter(user=self.request.user)
