@@ -5,14 +5,14 @@ from .base import env
 SECRET_KEY = env(
     "DJANGO_SECRET_KEY", default="o4-a9pg_xQayK-m21UgkyJKwda2HFOR5-OFlkrGu94Mw1DE4mes"
 )
-ADMIN_URL = "admin/"
+ADMIN_URL = "admin"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 SECURE_SSL_REDIRECT = False
 ACCOUNT_ADAPTER = "core_apps.users.adapters.CustomAccountAdapter"
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8080",
+    "http://localhost:8000",
     "http://localhost:3000",
 ]
 CSRF_TRUSTED_ORIGINS = [
