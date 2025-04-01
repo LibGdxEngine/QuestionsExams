@@ -64,7 +64,7 @@ urlpatterns = [
                   # path("api/auth/google/", GoogleLoginView.as_view(), name="google_login"),
                   path("api/v1/auth/facebook/", FacebookLoginView.as_view(), name="facebook_login"),
                   path("api/v1/auth/apple/", AppleLoginView.as_view(), name="apple_login"),
-                  path('api/v1/cart/', include('core_apps.cart.urls')),
+                  path('api/v1/', include('core_apps.cart.urls')),
                   path('api/v1/', include('core_apps.order.urls')),
                   path('api/v1/', include('core_apps.products.urls')),
                   path('api/v1/', include('core_apps.coupon.urls')),

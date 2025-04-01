@@ -31,12 +31,3 @@ class ProductViewSet(viewsets.ViewSet):
 
         # Return the paginated response
         return paginator.get_paginated_response(serializer.data)
-    #
-    # def retrieve(self, request, pk=None):
-    #     """GET: Retrieve a specific product"""
-    #     try:
-    #         product = Product.objects.get(pk=pk)
-    #         serializer = ProductSerializer(product)
-    #         return Response(serializer.data)
-    #     except Product.DoesNotExist:
-    #         return Response(status=status.HTTP_404_NOT_FOUND)
