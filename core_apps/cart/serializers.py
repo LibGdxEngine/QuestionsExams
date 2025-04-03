@@ -6,11 +6,12 @@ from core_apps.products.models import Product
 class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
     product_price = serializers.ReadOnlyField(source='product.price')
+    product_img = serializers.ReadOnlyField(source='product.img')
     total_price = serializers.ReadOnlyField()
 
     class Meta:
         model = CartItem
-        fields = ['id', 'product', 'product_name', 'product_price', 'quantity', 'total_price']
+        fields = ['id', 'product', 'product_name', 'product_price', 'quantity', 'total_price', 'product_img']
 
 
 class CartSerializer(serializers.ModelSerializer):
