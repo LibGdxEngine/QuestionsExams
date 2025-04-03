@@ -186,6 +186,13 @@ def payment_success(request):
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@authentication_classes([TokenAuthentication])
+def payment_cancel(request):
+    return Response({'redirect_url': 'https://krokplus.com'}, status=status.HTTP_200_OK)
+
+    
 
 
 @api_view(['GET'])

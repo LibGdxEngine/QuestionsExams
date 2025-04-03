@@ -10,6 +10,7 @@ urlpatterns = [
     path('create-checkout-session/', views.CreateCheckoutSessionView.as_view(), name='create-checkout-session'),
     path('create-subscription/', views.CreateSubscriptionCheckoutView.as_view(), name='create-subscription'),
     path('success/', views.payment_success, name='payment-success'),
+    path('cancel/', views.payment_cancel,  name='payment-cancel'),
     path('subscription/success/', views.subscription_success, name='subscription-success'),
     path('webhook/', views.stripe_webhook, name='stripe-webhook'),
     path('my-subscription/', views.UserSubscriptionView.as_view(), name='my-subscription'),
