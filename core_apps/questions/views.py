@@ -345,7 +345,7 @@ class UpdateExamJourneyAPIView(APIView):
         serializer = ExamJourneyUpdateSerializer(
             exam_journey, data=request.data, partial=True, context={"request": request}
         )
-
+        print(exam_journey)
         if serializer.is_valid():
             progress_data = request.data.get("progress", {})
             current_question_text = request.data.get("current_question_text")
@@ -353,25 +353,28 @@ class UpdateExamJourneyAPIView(APIView):
             for question_id, question_status in progress_data.items():
                 try:
                     question = Question.objects.get(id=question_status["question_id"])
-                    (
-                        user_question_status,
-                        created,
-                    ) = UserQuestionStatus.objects.get_or_create(
-                        user=request.user,
-                        question=question,
-                        defaults={"is_used": True},
-                    )
+                    # (
+                    #     user_question_status,
+                    #     created,
+                    # ) = UserQuestionStatus.objects.get_or_create(
+                    #     user=request.user,
+                    #     question=question,
+                    #     defaults={"is_used": True},
+                    # )
 
-                    user_question_status.is_used = True
-                    user_question_status.is_correct = (
-                        question.q_answers.all()[question_status["answer"]]
-                        == question.correct_answer
-                    )
-                    user_question_status.save()
+                    # user_question_status.is_used = True
+                    # user_question_status.is_correct = (
+                    #     question.q_answers.all()[question_status["answer"]]
+                    #     == question.correct_answer
+                    # )
+                    # user_question_status.save()
 
                     # If this is the current question, store its is_correct value
                     if question_status["question_text"] == current_question_text:
-                        current_question_is_correct = user_question_status.is_correct
+                        current_question_is_correct = (
+                        question.q_answers.all()[question_status["answer"]]
+                        == question.correct_answer
+                    )
 
                 except Question.DoesNotExist:
                     return Response(
@@ -445,22 +448,22 @@ class NoteViewSet(viewsets.ModelViewSet):
 class QuestionCountView(APIView):
     def get(self, request, *args, **kwargs):
         filters = Q()
-
+        
+        # Apply basic filters (language, specificity, level, etc.)
         language = request.GET.get("language")
         if language:
             filters &= Q(language__id=language)
-
+            
         specificity = request.GET.get("specificity")
         if specificity:
             filters &= Q(specificity__id=specificity)
-
+            
         level = request.GET.get("level")
         if level:
             filters &= Q(level__id=level)
-
+            
         years = request.GET.getlist("years")
         if years:
-            # Ensure all values are integers
             try:
                 years = [year for year in years[0].split(",")]
                 filters &= Q(years__id__in=years)
@@ -469,45 +472,62 @@ class QuestionCountView(APIView):
                     {"error": "Invalid years format"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-
+                
         subjects = request.GET.getlist("subjects")
         if subjects:
             subjects = [subject for subject in subjects[0].split(",")]
             filters &= Q(subjects__id__in=subjects)
-
+            
         systems = request.GET.getlist("systems")
         if systems:
             systems = [system for system in systems[0].split(",")]
             filters &= Q(systems__id__in=systems)
-
+            
         topics = request.GET.getlist("topics")
         if topics:
             topics = [topic for topic in topics[0].split(",")]
             filters &= Q(topics__id__in=topics)
-
-        # Filtering based on user-specific question status
+            
+        # Handle the new checkbox-based filtering
         user = request.user
-
-        # Filter questions by 'is_used' for the specific user
-        is_used = request.GET.get("is_used")
-        if is_used in ["True", "False"]:
-            is_used_filter = Q(
-                userquestionstatus__user=user,
-                userquestionstatus__is_used=is_used == "True",
-            )
-            filters &= is_used_filter
-
-        # Filter questions by 'is_correct' for the specific user
-        is_correct = request.GET.get("is_correct")
-        if is_correct in ["True", "False"]:
-            is_correct_filter = Q(
-                userquestionstatus__user=user,
-                userquestionstatus__is_correct=is_correct == "True",
-            )
-            filters &= is_correct_filter
+        
+        # Check if we should apply status filters
+        apply_status_filters = request.GET.get("apply_status_filters") == "true"
+        
+        if apply_status_filters:
+            # Get status filter values
+            filter_used = request.GET.get("filter_used") == "true"
+            filter_unused = request.GET.get("filter_unused") == "true"
+            filter_correct = request.GET.get("filter_correct") == "true"
+            filter_incorrect = request.GET.get("filter_incorrect") == "true"
+            
+             # Build a subquery for questions that have status objects
+            questions_with_status = Question.objects.filter(userquestionstatus__user=user).distinct()
+            
+            # Handle used/unused filtering
+            if filter_used and not filter_unused:
+                # Only questions marked as used
+                filters &= Q(userquestionstatus__user=user, userquestionstatus__is_used=True)
+            elif filter_unused and not filter_used:
+                # Questions explicitly marked as unused OR questions with no status at all
+                filters &= ~Q(pk__in=questions_with_status.filter(userquestionstatus__is_used=True))
+            elif filter_used and filter_unused:
+                # Both checked means no filtering on is_used
+                pass
+            
+            # Handle correct/incorrect filtering  
+            if filter_correct and not filter_incorrect:
+                # Only questions marked as correct
+                filters &= Q(userquestionstatus__user=user, userquestionstatus__is_correct=True)
+            elif filter_incorrect and not filter_correct:
+                # Questions explicitly marked as incorrect OR questions with no status at all
+                filters &= Q(userquestionstatus__user=user, userquestionstatus__is_correct=False)
+            elif filter_correct and filter_incorrect:
+                # Both checked means no filtering on is_correct
+                pass
+        
         count = Question.objects.filter(filters).distinct().count()
         return Response({"count": count}, status=status.HTTP_200_OK)
-
 
 class QuestionSearchAPIView(generics.ListAPIView):
     serializer_class = QuestionSerializer
