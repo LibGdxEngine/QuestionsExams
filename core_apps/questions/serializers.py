@@ -270,71 +270,69 @@ class ProgressField(serializers.Field):
         return processed_progress
 
 
+
 class ExamJourneyUpdateSerializer(serializers.ModelSerializer):
     progress = ProgressField()
 
     class Meta:
         model = ExamJourney
-        fields = ["time_left", "progress", "current_question"]
+        # Include fields that can be directly updated on ExamJourney
+        fields = ["time_left", "current_question", "progress"]
 
-    def update(self, instance, validated_data):
-        # Extract the progress data
+    def update(self, instance: ExamJourney, validated_data):
+        # Extract progress data if provided
         progress_data = validated_data.pop("progress", {})
 
-        # Update the instance with the remaining validated data
-        instance = super().update(instance, validated_data)
+        # --- Standard Field Updates ---
+        # Update fields directly on the instance before saving
+        instance.time_left = validated_data.get('time_left', instance.time_left)
+        new_current_question_index = validated_data.get('current_question', instance.current_question)
+        instance.current_question = new_current_question_index
 
-        # Save the progress data (e.g., in a JSONField or custom logic)
+        # --- Last Question Logic ---
+        if new_current_question_index is not None:
+            last_question_index = instance.questions.count() - 1
+
+            print(f"Current Question Index Received: {new_current_question_index}")
+            print(f"Last Question Index Calculated: {last_question_index}")
+
+            # Check if the *new* current_question index indicates the last question was just answered
+            if new_current_question_index >= last_question_index:
+                print('Processing final question results...')
+
+                all_journey_questions = instance.questions.all()
+                statuses_to_create = []
+
+                for question in all_journey_questions:
+                    # Determine correctness from progress_data.
+                    # Assumes progress_data keys are question IDs as strings.
+                    # Default to False if not found in progress_data.
+                  
+                    is_correct = progress_data.get(str(question.id-1), {}).get("is_correct", False)
+                    
+                    # Prepare the UserQuestionStatus object *without saving yet*
+                    status_obj = UserQuestionStatus(
+                        user=instance.user,
+                        question=question,
+                        is_used=True, 
+                        is_correct=is_correct,
+                        exam_journey=instance
+                    )
+                    statuses_to_create.append(status_obj)
+
+                # --- Bulk Create UserQuestionStatus ---
+                if statuses_to_create:
+                    # Use bulk_create for efficiency
+                    UserQuestionStatus.objects.bulk_create(statuses_to_create)
+                    print(f"Created {len(statuses_to_create)} UserQuestionStatus records.")
+                else:
+                    print("No questions found in journey to create status for.")
+
         instance.progress.update(progress_data)
-
+        # Save the updated ExamJourney instance
         instance.save()
 
         return instance
-    # def get_progress(self, obj):
-    #     progress_dict = obj.progress
-    #     progress_list = []
-    #     print(progress_dict)
-    #     for key, value in progress_dict.items():
-    #         progress_list.append(value)
-    #
-    #     return progress_list
-
-    # def update(self, instance, validated_data):
-    #     print(instance)
-    #     print(validated_data)
-    #     # Update time_left if provided
-    #     instance.time_left = validated_data.get("time_left", instance.time_left)
-    #     # Update current_question if provided
-    #     instance.current_question = validated_data.get(
-    #         "current_question", instance.current_question
-    #     )
-    #
-    #     # Get the progress from validated_data or from the instance if not present
-    #     progress = validated_data.get("progress", instance.progress)
-    #     # Loop through the progress data and update it with 'is_correct'
-    #     for question_text, question_status in progress.items():
-    #         question = get_object_or_404(Question, text=question_status.get("question_id", ""))
-    #         if question is not None:
-    #             print('Found')
-    #         else:
-    #             print('Not Found')
-    #         user_question_status, created = UserQuestionStatus.objects.get_or_create(
-    #             user=self.context["request"].user, question=question, is_used=True
-    #         )
-    #
-    #         if not created:
-    #             user_question_status.is_correct = (
-    #                     question.q_answers.all()[question_status["answer"]]
-    #                     == question.correct_answer
-    #             )
-    #             user_question_status.save()
-    #         # Add the 'is_correct' to the progress dict
-    #         progress[question_text]["is_correct"] = user_question_status.is_correct
-    #         progress[question_text]["correct_answer"] = question.correct_answer.answer_text
-    #     # Save the updated progress back to the instance
-    #     instance.progress = progress
-    #     instance.save()
-    #     return instance
 
 
 class QuestionFilterSerializer(serializers.Serializer):

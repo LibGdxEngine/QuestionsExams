@@ -209,9 +209,6 @@ class ExamJourneyUpdateView(UpdateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
-        # Custom logic (e.g., logging)
-        # print(f"Updated ExamJourney with ID: {instance.id}")
-
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

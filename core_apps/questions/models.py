@@ -216,7 +216,7 @@ class UserQuestionStatus(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     is_used = models.BooleanField(default=False)
     is_correct = models.BooleanField(default=False)
-
+    exam_journey = models.ForeignKey(ExamJourney, on_delete=models.CASCADE, null=True, blank=True,)
     def __str__(self):
         return f"Status of {self.user} on {self.question}"
 
