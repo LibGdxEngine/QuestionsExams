@@ -77,7 +77,7 @@ class CreateCheckoutSessionView(APIView):
             # Create Checkout Session
             checkout_session = stripe.checkout.Session.create(
                 customer_email=request.user.email,
-                payment_method_types=['card', 'apple_pay', 'google_pay'],
+                payment_method_types=['card'],
                 line_items=line_items,
                 discounts=discounts,
                 mode='payment',
