@@ -162,7 +162,7 @@ MIDDLEWARE = [
     # "main.middleware.LogResponseMiddleware",
     "core_apps.users.middleware.DDosMiddleware",
     # TODO: comment out this line in production
-    # "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "social_django.middleware.SocialAuthExceptionMiddleware",
@@ -245,7 +245,7 @@ STATIC_ROOT = str(ROOT_DIR / "staticfiles")
 MEDIA_URL = "/mediafiles/"
 MEDIA_ROOT = str(ROOT_DIR / "mediafiles")
 # TODO: comment out this line in production
-# STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 
 # Default primary key field type
@@ -379,5 +379,7 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
 ]
 
 # Additional settings for Facebook
+SOCIAL_AUTH_FACEBOOK_KEY='1407504406920403'
+SOCIAL_AUTH_FACEBOOK_SECRET='a3899b007bc32b6a50b25d17ed9f45b4'
 SOCIAL_AUTH_FACEBOOK_SCOPE = ["email"]
 SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {"fields": "id,name,email"}
