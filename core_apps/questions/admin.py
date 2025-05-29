@@ -64,9 +64,9 @@ class QuestionAdmin(ImportExportModelAdmin):
     inlines = [QuestionAnswerInline]
     change_form_template = "admin/questions/question/change_form_custom.html"
 
-    def get_formsets_with_inlines(self, request, obj=None):
-        # Override to prevent default inline rendering
-        return []
+    # def get_formsets_with_inlines(self, request, obj=None):
+    #     # Override to prevent default inline rendering
+    #     return []
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "correct_answer":

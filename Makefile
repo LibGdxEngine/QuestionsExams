@@ -1,9 +1,9 @@
 build:
-	docker-compose -f production.yml up --build -d --remove-orphans
+	docker compose -f production.yml up --build -d --remove-orphans
 up:
-	docker-compose -f production.yml up -d
+	docker compose -f production.yml up -d
 down:
-	docker-compose -f production.yml down
+	docker compose -f production.yml down
 show-logs:
 	docker-compose -f production.yml logs
 show-logs-api:
