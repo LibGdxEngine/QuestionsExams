@@ -80,6 +80,7 @@ services:
       - /etc/letsencrypt/live/krokplus.com/privkey.pem:/etc/letsencrypt/live/krokplus.com/privkey.pem # Mount privkey.pem
       - /etc/letsencrypt/options-ssl-nginx.conf:/etc/letsencrypt/options-ssl-nginx.conf #Mount options-ssl-nginx.conf
       - /etc/letsencrypt/ssl-dhparams.pem:/etc/letsencrypt/ssl-dhparams.pem #Mount ssl-dhparams.pem
+      - /var/www/certbot_challenges:/usr/share/nginx/html/challenges_root # Mount to a specific root for challenges
     networks:
       - reverseproxy_nw
     depends_on:
