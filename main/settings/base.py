@@ -27,7 +27,7 @@ if not DEBUG:
 # Application definition
 
 DJANGO_APPS = [
-    "corsheaders",
+    # "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
