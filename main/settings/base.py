@@ -19,15 +19,15 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    
 # JAZZMIN_UI_TWEAKS = {
 #     "theme": "flatly",
 #     "dark_mode_theme": "darkly",
 # }
 
 # Application definition
-
 DJANGO_APPS = [
-    "corsheaders",
+    # "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

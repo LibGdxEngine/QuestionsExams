@@ -33,6 +33,13 @@ class Subscription(models.Model):
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    plan = models.ForeignKey(
+        "Plan",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="subscriptions",
+    )
     stripe_subscription_id = models.CharField(max_length=255)
     stripe_customer_id = models.CharField(max_length=255)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
