@@ -51,7 +51,7 @@ def process_excel_file(excel_upload_id):
                 print("Unique answers:", answer_list)
                 for i, answer in enumerate(answer_list):
                     print("index", i)
-                    
+
                     TempAnswer.objects.create(
                         question=question,
                         text=answer,
@@ -108,26 +108,30 @@ def save_questions_task(temp_question_ids):
             if temp_question.subjects:
                 for subject in temp_question.subjects.split(","):
                     if subject.strip():
-                        subject_instance, _ = Subject.objects.get_or_create(
-                            name=subject.strip()
-                        )
+                        subject_name = subject.strip()
+                        subject_instance = Subject.objects.filter(name=subject_name).first()
+                        if not subject_instance:
+                            subject_instance = Subject.objects.create(name=subject_name)
                         question.subjects.add(subject_instance)
 
             if temp_question.systems:
-                for system in temp_question.systems.split(","):
-                    if system.strip():
-                        system_instance, _ = System.objects.get_or_create(
-                            name=system.strip()
-                        )
-                        question.systems.add(system_instance)
+            for system in temp_question.systems.split(","):
+                system_name = system.strip()
+                if system_name:
+                    system_instance = System.objects.filter(name=system_name).first()
+                    if not system_instance:
+                        system_instance = System.objects.create(name=system_name)
+                    question.systems.add(system_instance)
 
             if temp_question.topics:
                 for topic in temp_question.topics.split(","):
-                    if topic.strip():
-                        topic_instance, _ = Topic.objects.get_or_create(
-                            name=topic.strip()
-                        )
+                    topic_name = topic.strip()
+                    if topic_name:
+                        topic_instance = Topic.objects.filter(name=topic_name).first()
+                        if not topic_instance:
+                            topic_instance = Topic.objects.create(name=topic_name)
                         question.topics.add(topic_instance)
+
 
             # Transfer answers with images
             for temp_answer in temp_question.temp_answers.all():
