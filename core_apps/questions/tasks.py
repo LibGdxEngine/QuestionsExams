@@ -45,11 +45,13 @@ def process_excel_file(excel_upload_id):
 
             answers = row.get("answers", "")
             correct_answer = row.get("correct_answer", "")
+            print("Processing question with answers:", answers)
             if pd.notna(answers):
                 answer_list = [a.strip() for a in unique_order_preserving(answers) if a.strip()]
-
+                print("Unique answers:", answer_list)
                 for i, answer in enumerate(answer_list):
                     print("index", i)
+                    
                     TempAnswer.objects.create(
                         question=question,
                         text=answer,

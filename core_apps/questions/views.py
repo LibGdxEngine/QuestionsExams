@@ -582,7 +582,7 @@ class QuestionSearchAPIView(generics.ListAPIView):
                     "text": question.text,
                     "match_source": list(set(match_source)),
                     "all_answers": all_answers,
-                    "correct_answer": question.correct_answer.answer_text,
+                    "correct_answer":  question.correct_answer.answer_text if question.correct_answer else [],
                     "matched_answers": matched_answers,
                     "language": question.language.name,
                     "specificity": question.specificity.name,
@@ -1091,7 +1091,7 @@ def save_questions(request):
         return JsonResponse(
             {
                 "success": True,
-                "message": "Questions are being saved in the background.",
+                "message": "Questions are being saved in the background. {}",
                 "total_questions": len(temp_question_ids),
             }
         )
