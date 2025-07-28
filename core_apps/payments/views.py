@@ -193,8 +193,6 @@ def payment_cancel(request):
     return Response({'redirect_url': 'https://krokplus.com'}, status=status.HTTP_200_OK)
 
     
-
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 @authentication_classes([TokenAuthentication])
@@ -208,7 +206,7 @@ def subscription_success(request):
     try:
         # Retrieve session info from Stripe
         checkout_session = stripe.checkout.Session.retrieve(session_id)
-
+        
         # Get subscription details
         subscription_id = checkout_session.subscription
         if not subscription_id:
