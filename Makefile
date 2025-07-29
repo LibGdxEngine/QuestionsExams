@@ -23,7 +23,7 @@ volume:
 backup-ls:
 	docker-compose -f production.yml exec postgres backups
 backup:
-	docker-compose -f production.yml exec postgres backup
+	docker compose -f production.yml exec postgres bash /scripts/backup.sh
 backup-restore:
 	docker-compose -f production.yml exec postgres restore {backup-file-name}
 flake8:
