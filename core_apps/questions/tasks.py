@@ -26,7 +26,7 @@ def process_excel_file(excel_upload_id):
     try:
         excel_upload = ExcelUpload.objects.get(id=excel_upload_id)
         df = pd.read_excel(excel_upload.file)
-        
+
         for index, row in df.iterrows():
             question_data = {
                 "excel_upload": excel_upload,
@@ -115,13 +115,13 @@ def save_questions_task(temp_question_ids):
                         question.subjects.add(subject_instance)
 
             if temp_question.systems:
-            for system in temp_question.systems.split(","):
-                system_name = system.strip()
-                if system_name:
-                    system_instance = System.objects.filter(name=system_name).first()
-                    if not system_instance:
-                        system_instance = System.objects.create(name=system_name)
-                    question.systems.add(system_instance)
+                for system in temp_question.systems.split(","):
+                    system_name = system.strip()
+                    if system_name:
+                        system_instance = System.objects.filter(name=system_name).first()
+                        if not system_instance:
+                            system_instance = System.objects.create(name=system_name)
+                        question.systems.add(system_instance)
 
             if temp_question.topics:
                 for topic in temp_question.topics.split(","):
@@ -131,7 +131,6 @@ def save_questions_task(temp_question_ids):
                         if not topic_instance:
                             topic_instance = Topic.objects.create(name=topic_name)
                         question.topics.add(topic_instance)
-
 
             # Transfer answers with images
             for temp_answer in temp_question.temp_answers.all():

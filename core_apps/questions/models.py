@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+import random
 
 User = get_user_model()
 
@@ -127,9 +128,9 @@ class Question(models.Model):
     specificity = models.ForeignKey(Specificity, on_delete=models.CASCADE)
     level = models.ForeignKey(Level, on_delete=models.CASCADE)
     years = models.ManyToManyField(Year)
-    subjects = models.ManyToManyField(Subject)
-    systems = models.ManyToManyField(System)
-    topics = models.ManyToManyField(Topic)
+    subjects = models.ManyToManyField(Subject, blank=True)
+    systems = models.ManyToManyField(System, blank=True)
+    topics = models.ManyToManyField(Topic, blank=True)
     hint = models.TextField(blank=True, default="")
     video_hint = models.URLField(blank=True, default="")
     # answers = models.ManyToManyField(QuestionAnswer, related_name='questions')
@@ -166,20 +167,20 @@ class ExamJourney(models.Model):
         # If question_order is empty, generate a random order
         if not self.question_order and self.questions.exists():
             # Get all question IDs
-            question_ids = list(self.questions.values_list('id', flat=True))
-            
+            question_ids = list(self.questions.values_list("id", flat=True))
+
             # Shuffle the question IDs
             random.shuffle(question_ids)
-            
+
             # Store the shuffled order
             self.question_order = question_ids
-        
+
         super().save(*args, **kwargs)
-        
+
     def __str__(self):
         return f"{self.user} - {self.type}"
 
-        
+
 class Note(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     question = models.ForeignKey("Question", on_delete=models.CASCADE)
@@ -216,7 +217,13 @@ class UserQuestionStatus(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     is_used = models.BooleanField(default=False)
     is_correct = models.BooleanField(default=False)
-    exam_journey = models.ForeignKey(ExamJourney, on_delete=models.CASCADE, null=True, blank=True,)
+    exam_journey = models.ForeignKey(
+        ExamJourney,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+
     def __str__(self):
         return f"Status of {self.user} on {self.question}"
 
@@ -265,7 +272,9 @@ class Answer(models.Model):
 
 
 class HomePage(models.Model):
-    video_url = models.URLField("Home Page Video URL", max_length=500, blank=True, null=True)
+    video_url = models.URLField(
+        "Home Page Video URL", max_length=500, blank=True, null=True
+    )
 
     class Meta:
         verbose_name = "Home Video"  # Singular name
