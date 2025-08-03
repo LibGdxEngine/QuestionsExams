@@ -536,7 +536,11 @@ class QuestionSearchAPIView(generics.ListAPIView):
         if not search_term:
             return Question.objects.none()
 
-        base_qs = Question.objects.filter(correct_answer__isnull=False)
+        base_qs = (
+            Question.objects
+            .annotate(answer_count=Count("q_answers"))  # Count related answers
+            .filter(correct_answer__isnull=False, answer_count__gt=0)  # Only include valid ones
+        )
 
         return (
             base_qs.filter(
