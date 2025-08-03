@@ -540,7 +540,8 @@ class QuestionSearchAPIView(generics.ListAPIView):
             Question.objects.filter(
                 Q(text__icontains=search_term)
                 | Q(q_answers__answer_text__icontains=search_term)
-                | Q(correct_answer__answer_text__icontains=search_term)
+                | Q(correct_answer__answer_text__icontains=search_term),
+                correct_answer__isnull=False
             )
             .distinct()
             .select_related("language", "specificity", "level", "correct_answer")
@@ -582,7 +583,7 @@ class QuestionSearchAPIView(generics.ListAPIView):
                     "text": question.text,
                     "match_source": list(set(match_source)),
                     "all_answers": all_answers,
-                    "correct_answer":  question.correct_answer.answer_text if question.correct_answer else [],
+                    "correct_answer": question.correct_answer.answer_text if question.correct_answer else None,
                     "matched_answers": matched_answers,
                     "language": question.language.name,
                     "specificity": question.specificity.name,
