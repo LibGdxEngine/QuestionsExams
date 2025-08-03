@@ -536,12 +536,13 @@ class QuestionSearchAPIView(generics.ListAPIView):
         if not search_term:
             return Question.objects.none()
 
+        base_qs = Question.objects.filter(correct_answer__isnull=False)
+
         return (
-            Question.objects.filter(
+            base_qs.filter(
                 Q(text__icontains=search_term)
                 | Q(q_answers__answer_text__icontains=search_term)
-                | Q(correct_answer__answer_text__icontains=search_term),
-                correct_answer__isnull=False
+                | Q(correct_answer__answer_text__icontains=search_term)
             )
             .distinct()
             .select_related("language", "specificity", "level", "correct_answer")
