@@ -2,25 +2,25 @@
 {% load static %}
 
 {% block after_related_objects %}
-    <h2>Question Answers</h2>
-    <div id="question-answers">
-        {% for form in inline_admin_formset %}
-            <div class="question-answer">
-                <div>
-                    <label>Answer Text:</label>
-                    {{ form.answer_text }}
-                </div>
-                <div>
-                    <label>Image:</label>
-                    {% if form.instance.pk and form.instance.image %}
-                        <img src="{{ form.instance.image.url }}" width="50" height="50" style="margin: 2px;" />
-                    {% else %}
-                        No Image
-                    {% endif %}
-                </div>
-            </div>
-        {% endfor %}
-    </div>
+{#    <h2>Question Answers</h2>#}
+{#    <div id="question-answers">#}
+{#        {% for form in inline_admin_formset %}#}
+{#            <div class="question-answer">#}
+{#                <div>#}
+{#                    <label>Answer Text:</label>#}
+{#                    {{ form.answer_text }}#}
+{#                </div>#}
+{#                <div>#}
+{#                    <label>Image:</label>#}
+{#                    {% if form.instance.pk and form.instance.image %}#}
+{#                        <img src="{{ form.instance.image.url }}" width="50" height="50" style="margin: 2px;" />#}
+{#                    {% else %}#}
+{#                        No Image#}
+{#                    {% endif %}#}
+{#                </div>#}
+{#            </div>#}
+{#        {% endfor %}#}
+{#    </div>#}
     <script>
         function deleteAnswer(answerId) {
             if (confirm('Are you sure you want to delete this answer?')) {
