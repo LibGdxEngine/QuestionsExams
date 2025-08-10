@@ -8,7 +8,7 @@ env = environ.Env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
-
+APPEND_SLASH=True
 APP_DIR = ROOT_DIR / "core_apps"
 DOMAIN = "krokplus.com"
 SITE_NAME = "KrokPlus"
@@ -162,7 +162,7 @@ MIDDLEWARE = [
     # "main.middleware.LogResponseMiddleware",
     "core_apps.users.middleware.DDosMiddleware",
     # TODO: comment out this line in production
-    # "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "social_django.middleware.SocialAuthExceptionMiddleware",
@@ -245,7 +245,7 @@ STATIC_ROOT = str(ROOT_DIR / "staticfiles")
 MEDIA_URL = "/mediafiles/"
 MEDIA_ROOT = str(ROOT_DIR / "mediafiles")
 # TODO: comment out this line in production
-# STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 
 # Default primary key field type
