@@ -61,7 +61,7 @@ class QuestionAdmin(ImportExportModelAdmin):
     ]
     filter_horizontal = ["years", "subjects", "systems", "topics"]
     exclude = ["is_used", "is_correct"]
-    inlines = [QuestionAnswerInline]
+    # inlines = [QuestionAnswerInline]
     change_form_template = "admin/questions/question/change_form_custom.html"
 
     # def get_formsets_with_inlines(self, request, obj=None):
@@ -201,17 +201,17 @@ class QuestionAdmin(ImportExportModelAdmin):
         except QuestionAnswer.DoesNotExist:
             return JsonResponse({"success": False, "message": "Answer not found."})
 
-    def change_view(self, request, object_id, form_url="", extra_context=None):
-        extra_context = extra_context or {}
-        obj = self.get_object(request, object_id)
-        if obj:  # Ensure the object exists
-            formset = QuestionAnswerInline(self.model, self.admin_site).get_formset(
-                request, obj
-            )(instance=obj)
-            extra_context["inline_admin_formset"] = formset
-        return super().change_view(
-            request, object_id, form_url, extra_context=extra_context
-        )
+    # def change_view(self, request, object_id, form_url="", extra_context=None):
+    #     extra_context = extra_context or {}
+    #     obj = self.get_object(request, object_id)
+    #     if obj:  # Ensure the object exists
+    #         formset = QuestionAnswerInline(self.model, self.admin_site).get_formset(
+    #             request, obj
+    #         )(instance=obj)
+    #         extra_context["inline_admin_formset"] = formset
+    #     return super().change_view(
+    #         request, object_id, form_url, extra_context=extra_context
+    #     )
 
 
 @admin.register(ExcelUpload)

@@ -7,35 +7,35 @@ User = get_user_model()
 
 
 class Language(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
         return self.name
 
 
 class Specificity(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
 
 
 class Level(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
         return self.name
 
 
 class University(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
         return self.name
 
 
 class Year(models.Model):
-    year = models.CharField(max_length=50, null=True, blank=True)
+    year = models.CharField(max_length=50, null=True, blank=True, unique=True)
 
     def __str__(self):
         return str(self.year)
@@ -53,7 +53,7 @@ class Year(models.Model):
 
 
 class Subject(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
@@ -68,7 +68,7 @@ class Subject(models.Model):
 
 
 class System(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
@@ -83,7 +83,7 @@ class System(models.Model):
 
 
 class Topic(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
