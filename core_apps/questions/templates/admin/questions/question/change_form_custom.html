@@ -3,7 +3,7 @@
 
 {% block after_related_objects %}
 {#    <h2>Question Answers</h2>#}
-{#    <div id="question-answers">#}
+    <div id="question-answers">
 {#        {% for form in inline_admin_formset %}#}
 {#            <div class="question-answer">#}
 {#                <div>#}
@@ -20,7 +20,7 @@
 {#                </div>#}
 {#            </div>#}
 {#        {% endfor %}#}
-{#    </div>#}
+    </div>
     <script>
         function deleteAnswer(answerId) {
             if (confirm('Are you sure you want to delete this answer?')) {
