@@ -37,6 +37,7 @@ class QuestionAnswerInline(admin.TabularInline):
     fields = ["answer_text", "image", "image_preview"]
     readonly_fields = ["image_preview"]
 
+
     def image_preview(self, obj):
         if obj.image:
             return format_html(
