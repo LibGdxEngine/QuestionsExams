@@ -345,41 +345,130 @@ class UpdateExamJourneyAPIView(APIView):
         print(exam_journey)
         if serializer.is_valid():
             progress_data = request.data.get("progress", {})
+            # Prefer current_question_id, fall back to current_question_text for backward compatibility
+            current_question_id = request.data.get("current_question_id")
             current_question_text = request.data.get("current_question_text")
             current_question_is_correct = None
+            
+            # Collect all question identifiers for bulk fetching
+            question_ids_to_fetch = set()
+            question_texts_to_fetch = []
+            
+            for question_id, question_status in progress_data.items():
+                # Collect question IDs
+                if "question_id" in question_status:
+                    try:
+                        question_ids_to_fetch.add(int(question_status["question_id"]))
+                    except (ValueError, TypeError):
+                        pass
+                
+                # Try using dict key as question_id
+                try:
+                    question_ids_to_fetch.add(int(question_id))
+                except (ValueError, TypeError):
+                    pass
+                
+                # Collect question texts for fallback
+                if "question_text" in question_status:
+                    question_texts_to_fetch.append(question_status["question_text"])
+            
+            # Bulk fetch all questions
+            questions_by_id = {}
+            questions_by_text = {}
+            
+            if question_ids_to_fetch:
+                questions = Question.objects.filter(
+                    id__in=question_ids_to_fetch
+                ).select_related('correct_answer').prefetch_related('q_answers')
+                questions_by_id = {q.id: q for q in questions}
+            
+            if question_texts_to_fetch:
+                questions = Question.objects.filter(
+                    text__in=question_texts_to_fetch
+                ).select_related('correct_answer').prefetch_related('q_answers')
+                for q in questions:
+                    if q.text not in questions_by_text:
+                        questions_by_text[q.text] = q
+            
+            # Process each question using bulk-fetched data
             for question_id, question_status in progress_data.items():
                 try:
-                    question = Question.objects.get(id=question_status["question_id"])
-                    # (
-                    #     user_question_status,
-                    #     created,
-                    # ) = UserQuestionStatus.objects.get_or_create(
-                    #     user=request.user,
-                    #     question=question,
-                    #     defaults={"is_used": True},
-                    # )
-
-                    # user_question_status.is_used = True
-                    # user_question_status.is_correct = (
-                    #     question.q_answers.all()[question_status["answer"]]
-                    #     == question.correct_answer
-                    # )
-                    # user_question_status.save()
+                    question = None
+                    
+                    # Try to get question by ID from question_status (preferred)
+                    if "question_id" in question_status:
+                        try:
+                            q_id = int(question_status["question_id"])
+                            question = questions_by_id.get(q_id)
+                        except (ValueError, TypeError):
+                            pass
+                    
+                    # If not found, try using the dict key as question_id
+                    if question is None:
+                        try:
+                            q_id = int(question_id)
+                            question = questions_by_id.get(q_id)
+                        except (ValueError, TypeError):
+                            pass
+                    
+                    # Fall back to text lookup for backward compatibility (deprecated)
+                    if question is None:
+                        if "question_text" in question_status:
+                            question = questions_by_text.get(question_status["question_text"])
+                            if question is None:
+                                return Response(
+                                    {
+                                        "error": f'Question not found. Please provide "question_id" instead of "question_text" for question {question_id}.'
+                                    },
+                                    status=status.HTTP_400_BAD_REQUEST,
+                                )
+                        else:
+                            return Response(
+                                {
+                                    "error": f'Missing question identifier. Please provide either "question_id" or "question_text" for question {question_id}.'
+                                },
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
 
                     # If this is the current question, store its is_correct value
-                    if question_status["question_text"] == current_question_text:
-                        current_question_is_correct = (
-                        question.q_answers.all()[question_status["answer"]]
-                        == question.correct_answer
-                    )
+                    # Prefer ID comparison, fall back to text comparison for backward compatibility
+                    is_current_question = False
+                    if current_question_id is not None:
+                        try:
+                            current_id_int = int(current_question_id)
+                            is_current_question = (question.id == current_id_int)
+                        except (ValueError, TypeError):
+                            pass
+                    
+                    if not is_current_question and current_question_text is not None:
+                        # Fall back to text comparison for backward compatibility
+                        question_text = question_status.get("question_text", question.text)
+                        is_current_question = (question_text == current_question_text)
+                    
+                    if is_current_question:
+                        # Get the answer index or text - use prefetched answers
+                        answer_index = question_status.get("answer")
+                        if isinstance(answer_index, int):
+                            # If answer is an index
+                            try:
+                                answers_list = list(question.q_answers.all())
+                                selected_answer = answers_list[answer_index]
+                                current_question_is_correct = (selected_answer == question.correct_answer)
+                            except (IndexError, AttributeError):
+                                current_question_is_correct = False
+                        else:
+                            # If answer is text - use prefetched answers
+                            selected_answer = None
+                            for answer in question.q_answers.all():
+                                if answer.answer_text == answer_index:
+                                    selected_answer = answer
+                                    break
+                            
+                            if selected_answer:
+                                current_question_is_correct = (selected_answer == question.correct_answer)
+                            else:
+                                current_question_is_correct = False
 
-                except Question.DoesNotExist:
-                    return Response(
-                        {
-                            "error": f'Question with text "{question_status["question_text"]}" not found.'
-                        },
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
                 except Exception as e:
                     return Response(
                         {"error": f"Error processing question: {str(e)}"},

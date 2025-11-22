@@ -274,9 +274,43 @@ class QuestionResource(resources.ModelResource):
         After importing the row, handle the related fields like 'answers' and 'correct_answer'
         now that the 'Question' instance has been saved and has a primary key.
         """
-        question_text = row.get("text")
-        # Fetch the newly created or updated Question
-        question = Question.objects.get(text=question_text)
+        # Prefer using the instance from row_result (the just-created/updated question)
+        if row_result and hasattr(row_result, 'instance') and row_result.instance:
+            question = row_result.instance
+        else:
+            # Fall back to lookup using composite key (text + language + specificity + level)
+            # This is more reliable than text-only lookup when duplicate texts exist
+            question_text = row.get("text")
+            language_name = row.get("language")
+            specificity_name = row.get("specificity")
+            level_name = row.get("level")
+            
+            # Try composite key lookup first
+            question = None
+            if language_name and specificity_name and level_name:
+                try:
+                    language = Language.objects.get(name=language_name)
+                    specificity = Specificity.objects.get(name=specificity_name)
+                    level = Level.objects.get(name=level_name)
+                    question = Question.objects.filter(
+                        text=question_text,
+                        language=language,
+                        specificity=specificity,
+                        level=level
+                    ).first()
+                except (Language.DoesNotExist, Specificity.DoesNotExist, Level.DoesNotExist):
+                    pass
+            
+            # Fall back to text-only lookup if composite key fails
+            if question is None:
+                try:
+                    # Use filter().first() instead of get() to handle multiple objects
+                    question = Question.objects.filter(text=question_text).first()
+                    if question is None:
+                        raise Question.DoesNotExist(f"Question with text '{question_text}' not found.")
+                except Question.MultipleObjectsReturned:
+                    # If multiple questions with same text exist, use the most recent one
+                    question = Question.objects.filter(text=question_text).order_by('-id').first()
 
         # Handle Many-to-One relation for answers after saving the Question
         answers_data = row.get("answers", "")

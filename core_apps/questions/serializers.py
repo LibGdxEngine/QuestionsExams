@@ -215,17 +215,44 @@ class ExamJourneySerializer(serializers.ModelSerializer):
         progress_list = []
 
         for key, value in progress_dict.items():
-            # Get the question object to access its ID
-            question = Question.objects.filter(text=value["question_text"]).first()
-            question_id = question.id if question else None
+            # Use the dict key as question_id (it should be the question ID as string)
+            # Fall back to question_id from value, then to text lookup for backward compatibility
+            question_id = None
+            question = None
+            
+            # Try to use the dict key as question_id (preferred)
+            try:
+                question_id = int(key)
+                question = Question.objects.filter(id=question_id).first()
+            except (ValueError, TypeError):
+                pass
+            
+            # If not found, try question_id from value
+            if question is None and "question_id" in value:
+                try:
+                    question_id = int(value["question_id"])
+                    question = Question.objects.filter(id=question_id).first()
+                except (ValueError, TypeError):
+                    pass
+            
+            # Fall back to text lookup for backward compatibility (deprecated)
+            if question is None and "question_text" in value:
+                question = Question.objects.filter(text=value["question_text"]).first()
+                if question:
+                    question_id = question.id
+            
+            # If still no question found, use None
+            if question_id is None:
+                question_id = None
 
             progress_list.append(
                 {
-                    "id": question_id,  # Add question ID
-                    "question_text": value["question_text"],
-                    "answer": value["answer"],
-                    "is_correct": value["is_correct"],
-                    "correct_answer": value["correct_answer"],
+                    "id": question_id,  # Question ID
+                    "question_id": question_id,  # Also include as question_id for consistency
+                    "question_text": value.get("question_text", ""),  # Keep for display
+                    "answer": value.get("answer", ""),
+                    "is_correct": value.get("is_correct", False),
+                    "correct_answer": value.get("correct_answer", ""),
                     "is_disabled": True,
                 }
             )
@@ -243,29 +270,129 @@ class ProgressField(serializers.Field):
         if not isinstance(data, dict):
             raise serializers.ValidationError("Progress must be a dictionary.")
 
-        processed_progress = {}
+        # Collect all question IDs and texts for bulk fetching
+        question_ids_to_fetch = set()
+        question_texts_to_fetch = []
+        question_text_map = {}  # Map question_text -> (key, question_data)
+        
+        # First pass: collect all identifiers
         for question_id, question_data in data.items():
             if not isinstance(question_data, dict):
                 raise serializers.ValidationError(f"Invalid data for question {question_id}.")
 
             # Ensure required fields are present
-            if "question_text" not in question_data or "answer" not in question_data:
-                raise serializers.ValidationError(f"Missing required fields for question {question_id}.")
+            if "answer" not in question_data:
+                raise serializers.ValidationError(f"Missing required field 'answer' for question {question_id}.")
 
-            # Retrieve the question from the database
+            # Collect question IDs
+            if "question_id" in question_data:
+                try:
+                    question_ids_to_fetch.add(int(question_data["question_id"]))
+                except (ValueError, TypeError):
+                    pass
+            
+            # Try using dict key as question_id
             try:
-                question = Question.objects.filter(text=question_data["question_text"]).first()
+                question_ids_to_fetch.add(int(question_id))
+            except (ValueError, TypeError):
+                pass
+            
+            # Collect question texts for fallback lookup
+            if "question_text" in question_data:
+                question_texts_to_fetch.append(question_data["question_text"])
+                question_text_map[question_data["question_text"]] = (question_id, question_data)
 
-                selected_answer_text = question.q_answers.get(answer_text=question_data["answer"]).answer_text
+        # Bulk fetch all questions by ID (preferred method)
+        questions_by_id = {}
+        if question_ids_to_fetch:
+            questions = Question.objects.filter(
+                id__in=question_ids_to_fetch
+            ).select_related('correct_answer').prefetch_related('q_answers')
+            questions_by_id = {q.id: q for q in questions}
+        
+        # Bulk fetch questions by text (fallback for backward compatibility)
+        questions_by_text = {}
+        if question_texts_to_fetch:
+            questions = Question.objects.filter(
+                text__in=question_texts_to_fetch
+            ).select_related('correct_answer').prefetch_related('q_answers')
+            # Use first() logic - if multiple exist, take the first one
+            for q in questions:
+                if q.text not in questions_by_text:
+                    questions_by_text[q.text] = q
 
-            except Question.DoesNotExist:
-                raise serializers.ValidationError(f"Question with ID {question_id} does not exist.")
+        # Second pass: process each question using bulk-fetched data
+        processed_progress = {}
+        for question_id, question_data in data.items():
+            question = None
+            used_id_lookup = False
+            
+            # Try to get question by ID from question_data (preferred)
+            if "question_id" in question_data:
+                try:
+                    q_id = int(question_data["question_id"])
+                    question = questions_by_id.get(q_id)
+                    if question:
+                        used_id_lookup = True
+                except (ValueError, TypeError):
+                    pass
+            
+            # Try using the dict key as question_id
+            if question is None:
+                try:
+                    q_id = int(question_id)
+                    question = questions_by_id.get(q_id)
+                    if question:
+                        used_id_lookup = True
+                except (ValueError, TypeError):
+                    pass
+            
+            # Fall back to text lookup for backward compatibility (deprecated)
+            if question is None:
+                if "question_text" in question_data:
+                    question = questions_by_text.get(question_data["question_text"])
+                    if question is None:
+                        raise serializers.ValidationError(
+                            f"Question not found. Please provide 'question_id' instead of 'question_text' for question {question_id}."
+                        )
+                else:
+                    raise serializers.ValidationError(
+                        f"Missing required field. Please provide either 'question_id' or 'question_text' for question {question_id}."
+                    )
+
+            # Ensure question_id is stored in the data for future lookups
+            if not used_id_lookup or "question_id" not in question_data:
+                question_data["question_id"] = question.id
+            
+            # Keep question_text for display purposes if provided, otherwise add it
+            if "question_text" not in question_data:
+                question_data["question_text"] = question.text
+
+            # Find the answer - use prefetched q_answers
+            answer_text = question_data["answer"]
+            selected_answer = None
+            
+            # Check prefetched answers
+            for answer in question.q_answers.all():
+                if answer.answer_text == answer_text:
+                    selected_answer = answer
+                    break
+            
+            if selected_answer is None:
+                raise serializers.ValidationError(
+                    f"Answer '{answer_text}' not found for question {question.id}."
+                )
 
             # Check if the answer is correct
-            is_correct = question.correct_answer.answer_text == selected_answer_text
-            question_data["is_correct"] = is_correct
-            question_data["correct_answer"] = question.correct_answer.answer_text
-            processed_progress[question_id] = question_data
+            if question.correct_answer:
+                is_correct = question.correct_answer == selected_answer
+                question_data["is_correct"] = is_correct
+                question_data["correct_answer"] = question.correct_answer.answer_text
+            else:
+                question_data["is_correct"] = False
+                question_data["correct_answer"] = ""
+            
+            processed_progress[str(question.id)] = question_data
 
         return processed_progress
 

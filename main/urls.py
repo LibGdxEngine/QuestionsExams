@@ -44,7 +44,7 @@ urlpatterns = [
                       CustomPasswordResetView.as_view(),
                       name="account_reset_password"
                   ),
-                  # path(settings.ADMIN_URL, admin.site.urls),
+                #   path(settings.ADMIN_URL, admin.site.urls),
                   path("api/v1/health-check", health_check, name="health-check"),
                   path("api/v1/user/", include("core_apps.users.urls", namespace="users")),
                   path("social-auth/", include("social_django.urls", namespace="social")),
