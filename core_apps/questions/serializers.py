@@ -322,8 +322,9 @@ class ProgressField(serializers.Field):
                     questions_by_text[q.text] = q
 
         # Second pass: process each question using bulk-fetched data
+        # Preserve the original keys from the input to maintain frontend expectations
         processed_progress = {}
-        for question_id, question_data in data.items():
+        for original_key, question_data in data.items():
             question = None
             used_id_lookup = False
             
@@ -340,7 +341,7 @@ class ProgressField(serializers.Field):
             # Try using the dict key as question_id
             if question is None:
                 try:
-                    q_id = int(question_id)
+                    q_id = int(original_key)
                     question = questions_by_id.get(q_id)
                     if question:
                         used_id_lookup = True
@@ -353,11 +354,11 @@ class ProgressField(serializers.Field):
                     question = questions_by_text.get(question_data["question_text"])
                     if question is None:
                         raise serializers.ValidationError(
-                            f"Question not found. Please provide 'question_id' instead of 'question_text' for question {question_id}."
+                            f"Question not found. Please provide 'question_id' instead of 'question_text' for question {original_key}."
                         )
                 else:
                     raise serializers.ValidationError(
-                        f"Missing required field. Please provide either 'question_id' or 'question_text' for question {question_id}."
+                        f"Missing required field. Please provide either 'question_id' or 'question_text' for question {original_key}."
                     )
 
             # Ensure question_id is stored in the data for future lookups
@@ -392,7 +393,8 @@ class ProgressField(serializers.Field):
                 question_data["is_correct"] = False
                 question_data["correct_answer"] = ""
             
-            processed_progress[str(question.id)] = question_data
+            # Preserve the original key from the input (don't change it to question.id)
+            processed_progress[original_key] = question_data
 
         return processed_progress
 
