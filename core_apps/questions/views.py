@@ -463,6 +463,7 @@ class UpdateExamJourneyAPIView(APIView):
                                 if answer.answer_text == answer_index:
                                     selected_answer = answer
                                     break
+                       
                             
                             if selected_answer:
                                 current_question_is_correct = (selected_answer == question.correct_answer)
