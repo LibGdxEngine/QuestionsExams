@@ -192,10 +192,47 @@ class Logout(viewsets.ViewSet):
     def create(self, request, *args, **kwargs):
         logout(request)
         response = Response({"success": "Logged out"}, status=status.HTTP_200_OK)
-        response.delete_cookie("sessionid", domain=".krokplus.com")
-        response.delete_cookie("csrftoken", domain=".krokplus.com")
-        response.delete_cookie("sessionid")
-        response.delete_cookie("csrftoken")
+
+        # Common cookie arguments based on settings
+        cookie_kwargs = {
+            "samesite": getattr(settings, "SESSION_COOKIE_SAMESITE", "Lax"),
+            "secure": getattr(settings, "SESSION_COOKIE_SECURE", False),
+        }
+
+        # Delete sessionid
+        response.delete_cookie(
+            settings.SESSION_COOKIE_NAME,
+            domain=getattr(settings, "SESSION_COOKIE_DOMAIN", None),
+            path=settings.SESSION_COOKIE_PATH,
+            **cookie_kwargs
+        )
+        
+        # Delete csrftoken
+        response.delete_cookie(
+            settings.CSRF_COOKIE_NAME,
+            domain=getattr(settings, "CSRF_COOKIE_DOMAIN", None),
+            path=settings.CSRF_COOKIE_PATH,
+            **cookie_kwargs
+        )
+        
+        # Explicit attempt to delete HostOnly cookies (domain=None) if the above had a domain set
+        # This handles cases where cookies might have been set without a specific domain
+        if getattr(settings, "SESSION_COOKIE_DOMAIN", None):
+             response.delete_cookie(
+                settings.SESSION_COOKIE_NAME,
+                domain=None,
+                path=settings.SESSION_COOKIE_PATH,
+                **cookie_kwargs
+            )
+
+        if getattr(settings, "CSRF_COOKIE_DOMAIN", None):
+             response.delete_cookie(
+                settings.CSRF_COOKIE_NAME,
+                domain=None,
+                path=settings.CSRF_COOKIE_PATH,
+                **cookie_kwargs
+            )
+
         return response
 
 
