@@ -139,7 +139,7 @@ class TestFavoriteListViews(TestCase):
             language=Language.objects.create(name='English'),
             specificity=Specificity.objects.create(name='Specificity'),
             level=Level.objects.create(name='Level'),
-            correct_answer=QuestionAnswer.objects.create(answer='Paris')
+            correct_answer=QuestionAnswer.objects.create(answer_text='Paris')
         )
 
     def test_add_question_to_favorite_list(self):
@@ -192,7 +192,7 @@ class TestQuestionViews(TestCase):
             language=Language.objects.create(name='English'),
             specificity=Specificity.objects.create(name='Specificity'),
             level=Level.objects.create(name='Level'),
-            correct_answer=QuestionAnswer.objects.create(answer='Paris')
+            correct_answer=QuestionAnswer.objects.create(answer_text='Paris')
         )
 
         url = reverse('questions:question-list')
@@ -215,7 +215,7 @@ class ExamJourneyTest(TestCase):
         self.subject = Subject.objects.create(name='Math')
         self.system = System.objects.create(name='Metric')
         self.topic = Topic.objects.create(name='Algebra')
-        self.question_answer = QuestionAnswer.objects.create(answer='Answer 1')
+        self.question_answer = QuestionAnswer.objects.create(answer_text='Answer 1')
         self.question = Question.objects.create(
             text='What is 2 + 2?',
             language=self.language,
