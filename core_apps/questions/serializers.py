@@ -195,27 +195,17 @@ class ExamJourneyDetailsSerializerV2(serializers.ModelSerializer):
             question_id = None
             question = None
             
-            # Try to use the dict key as question_id (preferred)
-            try:
-                question_id = int(key)
-                # We could fetch the question object here if we needed extra data not in 'value'
-                # For now, let's rely on 'value' having what we need or just trust the ID.
-                # If we need to validate existence, we can do a query, but for performance
-                # we might want to skip it if not strictly necessary, or do a bulk fetch.
-                # Given the v1 logic does individual fetches (which is N+1), let's try to be efficient OR consistent.
-                # V1 logic does `Question.objects.filter(id=question_id).first()` inside the loop.
-                # Let's keep it simple and consistent with V1's data enrichment but return a DICT.
-                
-                # Optimization: utilize the fact that we might not *need* the question object if 'value' is complete.
-                # However, v1 serializer ensures 'question_id', 'question_text', 'answer', 'is_correct', 'correct_answer'.
-                
-            except (ValueError, TypeError):
-                pass
-            
-            # If not found, try question_id from value
-            if question_id is None and "question_id" in value:
+            # Prioritize question_id from value (explicit source of truth)
+            if "question_id" in value:
                 try:
                     question_id = int(value["question_id"])
+                except (ValueError, TypeError):
+                    pass
+            
+            # If not found in value, try to use the dict key as question_id
+            if question_id is None:
+                try:
+                    question_id = int(key)
                 except (ValueError, TypeError):
                     pass
             
