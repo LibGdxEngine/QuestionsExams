@@ -191,7 +191,10 @@ class Logout(viewsets.ViewSet):
 
     def create(self, request, *args, **kwargs):
         logout(request)
-        return Response({"success": "Logged out"}, status=status.HTTP_200_OK)
+        response = Response({"success": "Logged out"}, status=status.HTTP_200_OK)
+        response.delete_cookie("sessionid")
+        response.delete_cookie("csrftoken")
+        return response
 
 
 def generate_verification_code():
