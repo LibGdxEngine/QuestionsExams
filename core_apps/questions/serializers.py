@@ -165,22 +165,41 @@ class ExamJourneyDetailsSerializerV2(serializers.ModelSerializer):
           
     def get_questions(self, obj):
         # Retrieve questions in the stored order
+        question_order = getattr(obj, "question_order", []) or []
+        
         questions = Question.objects.filter(
-            id__in=obj.question_order
+            id__in=question_order
         )
         
         # Maintain the specific order from question_order
-        questions = sorted(
-            questions, 
-            key=lambda q: obj.question_order.index(q.id)
-        )
+        if question_order:
+            try:
+                questions = sorted(
+                    questions, 
+                    key=lambda q: question_order.index(q.id) if q.id in question_order else float('inf')
+                )
+            except (ValueError, TypeError):
+                # Fallback if sorting fails
+                pass
         
         # Use the existing QuestionSerializer 
         serializer = QuestionSerializer(questions, many=True)
         return serializer.data
     
     def get_progress(self, obj):
-        progress_dict = obj.progress or {}
+        raw_progress = obj.progress
+        if not raw_progress:
+            return {}
+            
+        progress_dict = raw_progress
+        if isinstance(raw_progress, list):
+            # If stored as list, try to convert or return empty dict to match contract
+            # We can't robustly convert without IDs, but preventing 500 is priority.
+            return {}
+            
+        if not isinstance(progress_dict, dict):
+            return {}
+
         # Return the progress dictionary directly, but ensure keys are string IDs for consistency
         # and that we have the necessary fields for the frontend.
         # Ideally, we should validate/enrich this data similar to ExamJourneySerializer (v1)
@@ -190,6 +209,9 @@ class ExamJourneyDetailsSerializerV2(serializers.ModelSerializer):
         processed_progress = {}
 
         for key, value in progress_dict.items():
+            if not isinstance(value, dict):
+                continue
+
             # Use the dict key as question_id (it should be the question ID as string)
             # Fall back to question_id from value, then to text lookup for backward compatibility
             question_id = None
