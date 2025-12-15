@@ -49,8 +49,10 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
 ACCOUNT_ADAPTER = "core_apps.users.adapters.CustomAccountAdapter"
 SESSION_COOKIE_SECURE = True
-
+SESSION_COOKIE_DOMAIN = ".krokplus.com"
+ 
 CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_DOMAIN = ".krokplus.com"
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = None
 

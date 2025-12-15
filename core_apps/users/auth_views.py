@@ -192,6 +192,8 @@ class Logout(viewsets.ViewSet):
     def create(self, request, *args, **kwargs):
         logout(request)
         response = Response({"success": "Logged out"}, status=status.HTTP_200_OK)
+        response.delete_cookie("sessionid", domain=".krokplus.com")
+        response.delete_cookie("csrftoken", domain=".krokplus.com")
         response.delete_cookie("sessionid")
         response.delete_cookie("csrftoken")
         return response
