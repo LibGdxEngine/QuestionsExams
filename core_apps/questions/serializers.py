@@ -390,8 +390,10 @@ class ProgressField(serializers.Field):
                 question_data["is_correct"] = False
                 question_data["correct_answer"] = ""
             
-            # Preserve the original key from the input (don't change it to question.id)
-            processed_progress[original_key] = question_data
+            # Force the key to be the question ID string.
+            # This ensures that even if frontend sends "0" (index), we save "123" (ID).
+            # The frontend expects "123" (ID) when it reads the response.
+            processed_progress[str(question.id)] = question_data
 
         return processed_progress
 
