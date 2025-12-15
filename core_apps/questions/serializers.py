@@ -137,22 +137,19 @@ class ExamJourneyListSerializerV2(serializers.ModelSerializer):
         return progress_list
 
     def get_first_question(self, obj):
-        """Retrieve the first question's details based on current_question index."""
-        if obj.current_question is None or obj.questions.count() == 0:
-            return None
-
-        questions = list(obj.questions.all())  # Convert QuerySet to list to allow indexing
-        if obj.current_question < len(questions):
-            first_question = questions[obj.current_question]
+        """Retrieve the generic details of the exam based on the first question."""
+        first_question = obj.questions.first()
+        if first_question:
+            year = first_question.years.first()
             return {
                 "text": first_question.text,
-                "language": first_question.language.name,  # Assuming Language has a name field
-                "specificity": first_question.specificity.name,  # Assuming Specificity has a name field
-                "level": first_question.level.name,  # Assuming Level has a name field
-                "year": first_question.years.first().year,
+                "language": first_question.language.name,
+                "specificity": first_question.specificity.name,
+                "level": first_question.level.name,
+                "year": year.year if year else "",
             }
 
-        return None  # If index is out of range
+        return None
 
 
 class ExamJourneyDetailsSerializerV2(serializers.ModelSerializer):
