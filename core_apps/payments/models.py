@@ -58,6 +58,10 @@ class Plan(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     interval = models.CharField(max_length=20, choices=[('month', 'Monthly'), ('year', 'Yearly')])
     description = models.TextField()
+    features = models.JSONField(default=list, blank=True)
+    popular = models.BooleanField(default=False)
+    color = models.CharField(max_length=50, default="lightGreen")
+    icon = models.CharField(max_length=50, default="Baby")  # Name of the Lucide icon
 
     def __str__(self):
         return f"{self.name} - ${self.price}/{self.interval}"
